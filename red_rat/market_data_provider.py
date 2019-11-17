@@ -6,7 +6,7 @@ from datetime import date
 # documentation : https://www.worldtradingdata.com/documentation
 
 
-class WorldTradingDataClient:
+class MarketDataProvider:
     def __init__(self):
         self._api_token = environ.get('WorldTradingDataAPIKey')
         self._url = r'https://api.worldtradingdata.com/api/v1'
@@ -22,8 +22,8 @@ class WorldTradingDataClient:
         """
         Get end of day history of a given stock, index or mutual fund
         :param symbol: stock, index or mutual fund symbol (same as reuters)
-        :param date_from: starting date (optional)
-        :param date_to: ending date (optional)
+        :param date_from: starting date yyyy-mm-dd (optional)
+        :param date_to: ending date yyyy-mm-dd (optional)
         :param formatted: alter JSON data format. Does not affect CSV (optional, default is false)
         :param output: change output to CSV (optional, default is json)
         :param sort: sort by date; accept 'newest', 'oldest', 'asc', 'desc' (optional, default is 'newest')
