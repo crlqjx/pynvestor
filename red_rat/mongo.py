@@ -7,13 +7,14 @@ class MongoConnector:
         port = 27017
         self._mongo_client = MongoClient(host, port)
 
-    def insert_documents(self, database_name: str, collection_name: str, documents: list):
-        collection = getattr(getattr(self._mongo_client, database_name), collection_name)
-        collection.insert_many(documents=documents, ordered=False)
-
     def find_document(self, database_name: str, collection_name: str, **fields):
         collection = getattr(getattr(self._mongo_client, database_name), collection_name)
         return collection.find_one(fields)
 
-    def update_document(self, collection_name: str, data_to_update: dict):
-        return
+    def insert_documents(self, database_name: str, collection_name: str, documents: list):
+        collection = getattr(getattr(self._mongo_client, database_name), collection_name)
+        collection.insert_many(documents=documents, ordered=False)
+
+    def update_document(self, database_name,  collection_name: str, document_id: str, data_to_update: dict, **query):
+        collection = getattr(getattr(self._mongo_client, database_name), collection_name)
+        collection.update_one(query, {"$set": data_to_update})
