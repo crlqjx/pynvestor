@@ -1,21 +1,61 @@
 import requests
 import json
-from os import environ
+import os
+
 from datetime import date
+from random import shuffle
+from red_rat import logger
 
 # documentation : https://www.worldtradingdata.com/documentation
 
 
-class MarketDataProvider:
+class WorldTradingData:
     def __init__(self):
-        self._api_token = environ.get('WorldTradingDataAPIKey')
+        self._tokens_already_used = []
+        self._api_tokens = os.environ.get('WorldTradingDataAPIKey').split(";")
+        self._api_token = self.select_random_token()
         self._url = r'https://api.worldtradingdata.com/api/v1'
 
-        assert self._api_token is not None, 'missing api_token'
+        current_directory = os.path.dirname(__file__)
+        file_path = os.path.join(current_directory, "world_trading_data_list.json")
+        with open(file_path, "r") as f:
+            self._all_stocks = json.load(f)
+
+        assert self._api_tokens is not None, 'missing api_token'
+
+    @property
+    def url(self):
+        return self._url
+
+    @property
+    def all_stocks(self):
+        return self._all_stocks
+
+    def select_random_token(self):
+        """Select randomly an unused token from the tokens available"""
+
+        assert len(set(self._tokens_already_used)) < len(self._api_tokens), "No more tokens available"
+
+        tokens = self._api_tokens.copy()
+        shuffle(tokens)
+        if tokens[0] not in self._tokens_already_used:
+            selected_token = tokens[0]
+        else:
+            selected_token = self.select_random_token()
+        self._tokens_already_used.append(selected_token)
+
+        logger.log.info(f"connecting with token : {selected_token}")
+        return selected_token
 
     def query(self, end_point: str, method: str, params=None):
-        query = getattr(requests, method)(f'{self._url}/{end_point}', params)
-        return query
+        req = getattr(requests, method)(f'{self._url}/{end_point}&api_token={self._api_token}', params)
+        while "You have reached your request limit for the day".lower() not in req.text.lower():
+            return req
+        else:
+            # Reset token and rerun query
+            self._api_token = self.select_random_token()
+            req = self.query(end_point=end_point, method=method, params=params)
+            return req
 
     def get_historical_quotes(self, symbol: str, date_from: date = None, date_to: date = None, sort: bool = None,
                               output: str = None, formatted: bool = None):
@@ -30,7 +70,7 @@ class MarketDataProvider:
         :return: json dict (or csv)
         """
 
-        end_point = f'history?symbol={symbol}&sort={sort}&api_token={self._api_token}'
+        end_point = f'history?symbol={symbol}&sort={sort}'
         if date_from is not None:
             end_point = f'{end_point}&date_from={date_from}'
         if date_to is not None:
@@ -62,7 +102,7 @@ class MarketDataProvider:
         :return: json or csv
         """
 
-        end_point = f'stock_search?api_token={self._api_token}'
+        end_point = 'stock_search?'
         if search_term is not None:
             end_point = f'{end_point}&search_term={search_term}'
         if search_by is not None:
