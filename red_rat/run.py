@@ -8,6 +8,10 @@ from red_rat import logger
 mongo_connector = MongoConnector()
 market_data_provider = WorldTradingData()
 
+#TODO:
+# 1. insert fundamental data into mongo
+# 2. make a database of stocks with transcodification
+
 
 @logger
 def update_quotes():
