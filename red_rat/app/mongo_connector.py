@@ -18,7 +18,7 @@ class MongoConnector:
         collection = getattr(getattr(self._mongo_client, database_name), collection_name)
         return collection.find_one(fields)
 
-    def find_documents(self, database_name: str, collection_name: str, **fields):
+    def find_documents(self, database_name: str, collection_name: str, **fields) -> list:
         collection = getattr(getattr(self._mongo_client, database_name), collection_name)
         documents = collection.find(fields)
         return [document for document in documents]
@@ -40,5 +40,3 @@ class MongoConnector:
             logger.log.warning(f"bulk insert in {database_name}.{collection_name} with already existing key: inserted "
                                f"{bulk_write_error.details['nInserted']} documents, encountered "
                                f"{len(bulk_write_error.details['writeErrors'])} write errors")
-
-            pass
