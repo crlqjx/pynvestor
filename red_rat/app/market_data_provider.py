@@ -12,12 +12,12 @@ from red_rat import logger
 class WorldTradingData:
     def __init__(self):
         self._tokens_already_used = []
-        self._api_tokens = os.environ.get('WorldTradingDataAPIKey').split(";")
+        self._api_tokens = os.environ.get('WORLDTRADINGDATATOKENS').split(";")
         self._api_token = self.select_random_token()
         self._url = r'https://api.worldtradingdata.com/api/v1'
 
-        current_directory = os.path.dirname(__file__)
-        file_path = os.path.join(current_directory, "world_trading_data_list.json")
+        current_directory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        file_path = os.path.join(current_directory, "static", "world_trading_data_list.json")
         with open(file_path, "r") as f:
             self._all_stocks = json.load(f)
 
