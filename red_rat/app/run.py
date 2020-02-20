@@ -8,7 +8,7 @@ from red_rat.app.reuters_client import ReutersClient
 mongo_connector = MongoConnector()
 market_data_provider = WorldTradingData()
 
-# TODO: make a database of stocks with transcodification
+# TODO: update transcodification db
 # TODO: TOR https://www.sylvaindurand.fr/use-tor-with-python/
 
 
@@ -50,31 +50,33 @@ def insert_quotes(quotes):
 @logger
 def update_fundamentals():
     reuters = ReutersClient()
-    data_to_insert = []
+    data_to_insert = {'income': [], 'balance_sheet': [], 'cash_flow': []}
+    # TODO: take ric symbols from static table
     french_stocks = [stock for stock in market_data_provider.all_stocks if stock[3:] == ".PA"]
-    # french_stocks = ['BNPP.PA', 'PLVP.PA']
     for stock in french_stocks:
         fundamentals = reuters.get_financial_data(stock)
         if fundamentals.get('status') and fundamentals['status']['code'] == 200:
-            for period, income_statements in fundamentals['market_data']['financial_statements']['income'].items():
-                for report_elem, reports in income_statements.items():
-                    assert isinstance(reports, list)
-                    for report in reports:
-                        data = {'ric': fundamentals['ric'],
-                                'period': period,
-                                'report_elem': report_elem,
-                                'date': dt.datetime.fromisoformat(report['date']),
-                                'value': float(report['value'])}
+            for statement, statement_data in fundamentals['market_data']['financial_statements'].items():
+                for period, income_statements in statement_data.items():
+                    for report_elem, reports in income_statements.items():
+                        assert isinstance(reports, list)
+                        for report in reports:
+                            data = {'ric': fundamentals['ric'],
+                                    'period': period,
+                                    'report_elem': report_elem,
+                                    'date': dt.datetime.fromisoformat(report['date']),
+                                    'value': float(report['value'])}
 
-                        data_to_insert.append(data)
+                            data_to_insert[statement].append(data)
         else:
             logger.log.warning(f'{stock}: could not find fundamental data from reuters')
-    mongo_connector.insert_documents(database_name='fundamentals',
-                                     collection_name='income_statement',
-                                     documents=data_to_insert)
+    for statement in data_to_insert:
+        mongo_connector.insert_documents(database_name='fundamentals',
+                                         collection_name=statement,
+                                         documents=data_to_insert[statement])
 
 
 if __name__ == '__main__':
-    update_quotes()
+    # update_quotes()
     update_fundamentals()
     pass
