@@ -51,11 +51,21 @@ def insert_quotes(quotes):
 def update_fundamentals():
     reuters = ReutersClient()
     data_to_insert = {'income': [], 'balance_sheet': [], 'cash_flow': []}
-    # TODO: take ric symbols from static table
-    french_stocks = [stock for stock in market_data_provider.all_stocks if stock[3:] == ".PA"]
-    for stock in french_stocks:
-        fundamentals = reuters.get_financial_data(stock)
+    stocks_from_mongo = mongo_connector.find_documents('static', 'stocks')
+
+    for stock in stocks_from_mongo:
+        if stock.get('ric') is not None:
+            symbol = stock['ric']
+        else:
+            symbol = stock['symbol']
+
+        fundamentals = reuters.get_financial_data(symbol)
         if fundamentals.get('status') and fundamentals['status']['code'] == 200:
+            # if ric is not entered in DB, fill it
+            if stock.get('ric') is None:
+                mongo_connector.mongo_client.static.stocks.update({'_id': stock['_id']},
+                                                                  {'$set': {'ric': stock['symbol']}})
+
             for statement, statement_data in fundamentals['market_data']['financial_statements'].items():
                 for period, income_statements in statement_data.items():
                     for report_elem, reports in income_statements.items():
@@ -69,7 +79,7 @@ def update_fundamentals():
 
                             data_to_insert[statement].append(data)
         else:
-            logger.log.warning(f'{stock}: could not find fundamental data from reuters')
+            logger.log.warning(f'{stock["symbol"]}: could not find fundamental data from reuters')
     for statement in data_to_insert:
         mongo_connector.insert_documents(database_name='fundamentals',
                                          collection_name=statement,
