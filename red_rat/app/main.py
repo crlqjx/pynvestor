@@ -9,6 +9,8 @@ mongo_connector = MongoConnector()
 market_data_provider = WorldTradingData()
 
 # TODO: update transcodification db
+# TODO: gather fundamental data per stock into dataframe
+# TODO: filter stocks from fundamental data
 # TODO: TOR https://www.sylvaindurand.fr/use-tor-with-python/
 
 
@@ -86,7 +88,34 @@ def update_fundamentals():
                                          documents=data_to_insert[statement])
 
 
+def get_balance_sheet_elements(ric, period, date=None):
+    query_filter = {'ric': ric, 'period': period}
+    if date:
+        query_filter.update({'date': date})
+    balance_sheet_elems = mongo_connector.find_documents('fundamentals', 'balance_sheet', **query_filter)
+
+    return balance_sheet_elems
+
+
+def get_income_statement_elements(ric, period, date=None):
+    query_filter = {'ric': ric, 'period': period}
+    if date:
+        query_filter.update({'date': date})
+    income_statement_elems = mongo_connector.find_documents('fundamentals', 'income', **query_filter)
+
+    return income_statement_elems
+
+
+def get_cash_flow_statement_elements(ric, period, date=None):
+    query_filter = {'ric': ric, 'period': period}
+    if date:
+        query_filter.update({'date': date})
+    cash_flow_statement_elems = mongo_connector.find_documents('fundamentals', 'cash_flow', **query_filter)
+
+    return cash_flow_statement_elems
+
+
 if __name__ == '__main__':
-    # update_quotes()
+    update_quotes()
     update_fundamentals()
     pass
