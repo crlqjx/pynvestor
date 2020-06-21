@@ -2,11 +2,11 @@ import datetime as dt
 
 from red_rat import logger
 from red_rat.app.mongo_connector import MongoConnector
-from red_rat.app.market_data_provider import WorldTradingData
+from red_rat.app.market_data_provider import WorldTradingData, EuronextClient
 from red_rat.app.reuters_client import ReutersClient
 
 mongo_connector = MongoConnector()
-market_data_provider = WorldTradingData()
+market_data_provider = EuronextClient()
 
 # TODO: update transcodification db
 # TODO: gather fundamental data per stock into dataframe
@@ -16,37 +16,13 @@ market_data_provider = WorldTradingData()
 
 @logger
 def update_quotes():
-    french_stocks = [stock for stock in market_data_provider.all_stocks if stock[3:] == ".PA"]
-    for symbol in french_stocks:
-        logger.log.info(f'updating {symbol}')
-        quotes_to_insert = market_data_provider.get_historical_quotes(symbol)
-        try:
-            insert_quotes(quotes_to_insert)
-        except KeyError:
-            if quotes_to_insert['Message'].lower() == 'Error! The requested stock could not be found.'.lower():
-                logger.log.warning(f"{symbol} not found")
-        except Exception as e:
-            raise e
+    filtered_stocks = (stock for stock in market_data_provider.all_stocks if stock['mic'] in ['XPAR', 'ALXP'])
+    for stock in filtered_stocks:
+        logger.log.info(f'updating {stock}')
+        quotes = market_data_provider.get_quotes(stock['isin'], stock['mic'], 'max')
+        if quotes:
+            mongo_connector.insert_documents('quotes', 'equities', quotes)
     return
-
-
-def insert_quotes(quotes):
-    data_to_insert = []
-    for close_date, daily_quote in quotes['history'].items():
-        single_quote_to_insert = {
-            'name': quotes['name'],
-            'date': dt.datetime.fromisoformat(close_date),
-            'open': float(daily_quote['open']) if daily_quote.get('open') is not None else None,
-            'close': float(daily_quote['close']) if daily_quote.get('close') is not None else None,
-            'high': float(daily_quote['high']) if daily_quote.get('high') is not None else None,
-            'low': float(daily_quote['low']) if daily_quote.get('low') is not None else None,
-            'volume': float(daily_quote['volume']) if daily_quote.get('volume') is not None else None,
-            'source': market_data_provider.url
-        }
-        data_to_insert.append(single_quote_to_insert)
-    mongo_connector.insert_documents(database_name='historical_quotes',
-                                     collection_name='stocks',
-                                     documents=data_to_insert)
 
 
 @logger
@@ -117,5 +93,5 @@ def get_cash_flow_statement_elements(ric, period, date=None):
 
 if __name__ == '__main__':
     update_quotes()
-    update_fundamentals()
+    # update_fundamentals()
     pass

@@ -9,10 +9,15 @@ class MongoConnector:
         host = 'localhost'
         port = 27017
         self._mongo_client = MongoClient(host, port)
+        self._sanity_check()
 
     @property
     def mongo_client(self):
         return self._mongo_client
+
+    def _sanity_check(self):
+        # TODO: assert if all collections are in the database
+        return
 
     def find_document(self, database_name: str, collection_name: str, **fields):
         collection = getattr(getattr(self._mongo_client, database_name), collection_name)
