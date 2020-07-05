@@ -12,12 +12,12 @@ from red_rat import logger
 # documentation : https://www.worldtradingdata.com/documentation
 
 current_directory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+with open(os.path.join(current_directory, 'config.json'), 'r') as f:
+    config = json.load(f)
 
 
 class WorldTradingData:
     def __init__(self):
-        with open(os.path.join(current_directory, 'config.json'), 'r') as f:
-            config = json.load(f)
         self._tokens_already_used = []
         self._api_tokens = config['worldtradingdataapikey']
         self._api_token = self.select_random_token()
@@ -153,6 +153,14 @@ class EuronextClient:
 
         return all_stocks
 
+    def get_instrument_details(self, isin, mic):
+        url = f"https://gateway.euronext.com/api/instrumentDetail?code={isin}&codification=ISIN&exchCode={mic}&" \
+              f"sessionQuality=RT&view=FULL" \
+              f"&authKey={config['euronextapikey']}"
+        resp = self._session.get(url, data={'theme_name': 'euronext_live'})
+        resp.raise_for_status()
+        return resp.json()
+
     def get_quotes(self, isin, mic, period):
         assert period in ['max', 'intraday'], f'period {period} is not available'
 
@@ -167,6 +175,7 @@ class EuronextClient:
         return result
 
     def get_historical_data(self, isin, market, start_date, end_date):
+        # TODO
         url = 'https://live.euronext.com/fr/ajax/getHistoricalPricePopup/FR0000045072-XPAR'
 
     def update_stocks_list(self):
