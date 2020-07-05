@@ -1,0 +1,30 @@
+[
+  {
+    "type": "Cash",
+    "quantity": 233.10
+  },
+  {
+    "type": "Equity",
+    "isin": "FR0000036675",
+    "mic": "XPAR",
+    "quantity": 10
+  },
+  {
+    "type": "Equity",
+    "isin": "FR0013252186",
+    "mic": "XPAR",
+    "quantity": 46
+  },
+  {
+    "type": "Equity",
+    "isin": "FR0013283108",
+    "mic": "XPAR",
+    "quantity": 22
+  },
+  {
+    "type": "Equity",
+    "isin": "FR0013176526",
+    "mic": "XPAR",
+    "quantity": 15
+  }
+]
