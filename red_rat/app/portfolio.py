@@ -87,6 +87,8 @@ class Portfolio:
         self._market_values = market_values
 
         self._get_weights()
+        self._compute_portfolio_navs()
+        self._compute_portfolio_returns()
         return
 
     def _get_weights(self):
@@ -95,6 +97,19 @@ class Portfolio:
             weights[isin] = market_value / self._portfolio_market_value
 
         self._weights = weights
+        return
+
+    def _compute_portfolio_navs(self):
+        asset_values = self._mongo.find_documents(database_name='net_asset_values', collection_name='net_asset_values',
+                                                  projection={'_id': 0})
+
+        df_assets = DataFrame(asset_values).set_index('date')
+        df_assets['navs'] = df_assets['assets'] / df_assets['shares']
+        self._portfolio_navs = df_assets['navs']
+        return
+
+    def _compute_portfolio_returns(self):
+        self._portfolio_weekly_returns = self._portfolio_navs.pct_change()
         return
 
     def to_df(self):
@@ -144,5 +159,13 @@ class Portfolio:
         return self._perf_since_open
 
     @property
-    def perf_since_last_close(self):
-        return self._perf_since_last_close
+    def stocks_perf_since_last_close(self):
+        return self._stocks_perf_since_last_close
+
+    @property
+    def portfolio_navs(self):
+        return self._portfolio_navs
+
+    @property
+    def portfolio_weekly_returns(self):
+        return self._portfolio_weekly_returns
