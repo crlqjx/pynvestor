@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from red_rat.app.market_data_provider import EuronextClient
+from red_rat.app.mongo_connector import MongoConnector
 from pandas import DataFrame
 
 
@@ -10,33 +11,36 @@ class Portfolio:
             portfolio_path = Path(__file__).parent.parent.joinpath('portfolio.json')
         self._portfolio_path = portfolio_path
         self._euronext = EuronextClient()
-        self._positions = None
-        self._prices = None
-        self._quantities = None
-        self._market_values = None
+        self._mongo = MongoConnector()
+        self._stocks_positions = None
+        self._stocks_prices = None
+        self._stocks_quantities = None
+        self._stocks_market_values = None
         self._cash = None
         self._portfolio_market_value = None
-        self._weights = None
-        self._instrument_details = None
-        self._names = None
-        self._perf_since_open = None
-        self._perf_since_last_close = None
+        self._stocks_weights = None
+        self._stocks_details = None
+        self._stocks_names = None
+        self._portfolio_navs = None
+        self._stocks_perf_since_open = None
+        self._stocks_perf_since_last_close = None
+        self._portfolio_weekly_returns = None
         self._get_portfolio()
 
     def _load_portfolio_positions(self):
         with open(self._portfolio_path, 'r') as ptf:
             position = json.load(ptf)
-        self._positions = position
+        self._stocks_positions = position
 
         quantities = {}
-        for position in self._positions:
+        for position in self._stocks_positions:
             if position['type'].lower() == 'cash':
                 self._cash = position['quantity']
             else:
                 quantities[position['isin']] = int(position['quantity'])
 
-        self._quantities = quantities
-        assert self._quantities is not None, 'Could not retrieve quantities'
+        self._stocks_quantities = quantities
+        assert self._stocks_quantities is not None, 'Could not retrieve quantities'
         return
 
     def _get_euronext_data(self):
@@ -45,7 +49,7 @@ class Portfolio:
         names = {}
         perf_since_open = {}
         perf_since_last_close = {}
-        for position in self._positions:
+        for position in self._stocks_positions:
             if position['type'] != 'Cash':
                 isin = position['isin']
                 mic = position['mic']
@@ -66,11 +70,11 @@ class Portfolio:
                 price_open = float(euronext_data['currInstrSess']['openPx'])
                 perf_since_open[isin] = price / price_open - 1
 
-        self._instrument_details = instrument_details
-        self._prices = prices
-        self._names = names
-        self._perf_since_open = perf_since_open
-        self._perf_since_last_close = perf_since_last_close
+        self._stocks_details = instrument_details
+        self._stocks_prices = prices
+        self._stocks_names = names
+        self._stocks_perf_since_open = perf_since_open
+        self._stocks_perf_since_last_close = perf_since_last_close
         return
 
     def _get_portfolio(self):
@@ -79,12 +83,12 @@ class Portfolio:
 
         market_values = {}
         self._portfolio_market_value = self._cash
-        for isin, quantity in self._quantities.items():
-            price = self._prices[isin]
+        for isin, quantity in self._stocks_quantities.items():
+            price = self._stocks_prices[isin]
             market_values[isin] = price * quantity
             self._portfolio_market_value += market_values[isin]
 
-        self._market_values = market_values
+        self._stocks_market_values = market_values
 
         self._get_weights()
         self._compute_portfolio_navs()
@@ -93,10 +97,10 @@ class Portfolio:
 
     def _get_weights(self):
         weights = {}
-        for isin, market_value in self._market_values.items():
+        for isin, market_value in self._stocks_market_values.items():
             weights[isin] = market_value / self._portfolio_market_value
 
-        self._weights = weights
+        self._stocks_weights = weights
         return
 
     def _compute_portfolio_navs(self):
@@ -113,8 +117,8 @@ class Portfolio:
         return
 
     def to_df(self):
-        data = [self._names, self._quantities, self._weights, self._prices, self._perf_since_open,
-                self._perf_since_last_close, self._market_values]
+        data = [self._stocks_names, self._stocks_quantities, self._stocks_weights, self._stocks_prices, self._stocks_perf_since_open,
+                self._stocks_perf_since_last_close, self._stocks_market_values]
         columns = ['name', 'quantity', 'weight', 'last price', 'perf since open', 'perf since last close',
                    'market value']
         df = DataFrame(data).T
@@ -123,12 +127,12 @@ class Portfolio:
         return df
 
     @property
-    def quantities(self):
-        return self._quantities
+    def stocks_quantities(self):
+        return self._stocks_quantities
 
     @property
-    def prices(self):
-        return self._prices
+    def stocks_prices(self):
+        return self._stocks_prices
 
     @property
     def cash(self):
@@ -139,24 +143,24 @@ class Portfolio:
         return self._get_portfolio()
 
     @property
-    def weights(self):
-        return self._weights
+    def stocks_weights(self):
+        return self._stocks_weights
 
     @property
-    def market_values(self):
-        return self._market_values
+    def stocks_market_values(self):
+        return self._stocks_market_values
 
     @property
     def portfolio_market_value(self):
         return self._portfolio_market_value
 
     @property
-    def names(self):
-        return self._names
+    def stocks_names(self):
+        return self._stocks_names
 
     @property
-    def perf_since_open(self):
-        return self._perf_since_open
+    def stocks_perf_since_open(self):
+        return self._stocks_perf_since_open
 
     @property
     def stocks_perf_since_last_close(self):
