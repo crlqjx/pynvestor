@@ -19,15 +19,16 @@ class MongoConnector:
 
     def _sanity_check(self):
         # TODO: assert if all collections are in the database
+        # TODO: check all the index keys
         return
 
     def find_document(self, database_name: str, collection_name: str, **fields):
         collection = getattr(getattr(self._mongo_client, database_name), collection_name)
         return collection.find_one(fields)
 
-    def find_documents(self, database_name: str, collection_name: str, **fields) -> Generator:
+    def find_documents(self, database_name: str, collection_name: str, projection=None, **fields) -> Generator:
         collection = getattr(getattr(self._mongo_client, database_name), collection_name)
-        documents = collection.find(fields)
+        documents = collection.find(fields, projection)
         return (document for document in documents)
 
     def insert_documents(self, database_name: str, collection_name: str, documents: list):
