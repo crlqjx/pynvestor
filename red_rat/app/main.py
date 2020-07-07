@@ -2,7 +2,7 @@ import datetime as dt
 
 from red_rat import logger
 from red_rat.app.mongo_connector import MongoConnector
-from red_rat.app.market_data_provider import WorldTradingData, EuronextClient
+from red_rat.app.market_data_provider import EuronextClient
 from red_rat.app.reuters_client import ReutersClient
 
 mongo_connector = MongoConnector()
