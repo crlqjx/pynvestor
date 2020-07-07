@@ -3,6 +3,8 @@ from red_rat import logger
 from pymongo import MongoClient
 from pymongo.errors import BulkWriteError
 
+from typing import Generator
+
 
 class MongoConnector:
     def __init__(self):
@@ -23,10 +25,10 @@ class MongoConnector:
         collection = getattr(getattr(self._mongo_client, database_name), collection_name)
         return collection.find_one(fields)
 
-    def find_documents(self, database_name: str, collection_name: str, **fields) -> list:
+    def find_documents(self, database_name: str, collection_name: str, **fields) -> Generator:
         collection = getattr(getattr(self._mongo_client, database_name), collection_name)
         documents = collection.find(fields)
-        return [document for document in documents]
+        return (document for document in documents)
 
     def insert_documents(self, database_name: str, collection_name: str, documents: list):
         collection = getattr(getattr(self._mongo_client, database_name), collection_name)
