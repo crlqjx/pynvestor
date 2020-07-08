@@ -12,20 +12,6 @@ class Portfolio:
         self._portfolio_path = portfolio_path
         self._euronext = EuronextClient()
         self._mongo = MongoConnector()
-        self._stocks_positions = None
-        self._stocks_prices = None
-        self._stocks_quantities = None
-        self._stocks_market_values = None
-        self._cash = None
-        self._portfolio_market_value = None
-        self._stocks_weights = None
-        self._cash_weight = None
-        self._stocks_details = None
-        self._stocks_names = None
-        self._portfolio_navs = None
-        self._stocks_perf_since_open = None
-        self._stocks_perf_since_last_close = None
-        self._portfolio_weekly_returns = None
         self._get_portfolio()
 
     def _load_portfolio_positions(self):
