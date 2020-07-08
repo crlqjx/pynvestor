@@ -19,6 +19,7 @@ class Portfolio:
         self._cash = None
         self._portfolio_market_value = None
         self._stocks_weights = None
+        self._cash_weight = None
         self._stocks_details = None
         self._stocks_names = None
         self._portfolio_navs = None
@@ -99,8 +100,9 @@ class Portfolio:
         weights = {}
         for isin, market_value in self._stocks_market_values.items():
             weights[isin] = market_value / self._portfolio_market_value
-
         self._stocks_weights = weights
+
+        self._cash_weight = self._cash / self._portfolio_market_value
         return
 
     def _compute_portfolio_navs(self):
@@ -145,6 +147,10 @@ class Portfolio:
     @property
     def stocks_weights(self):
         return self._stocks_weights
+
+    @property
+    def cash_weight(self):
+        return self._cash_weight
 
     @property
     def stocks_market_values(self):
