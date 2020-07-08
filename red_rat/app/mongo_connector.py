@@ -26,9 +26,22 @@ class MongoConnector:
         collection = getattr(getattr(self._mongo_client, database_name), collection_name)
         return collection.find_one(fields)
 
-    def find_documents(self, database_name: str, collection_name: str, projection=None, **fields) -> Generator:
+    def find_documents(self, database_name: str, collection_name: str, projection=None,
+                       sort=None, **fields) -> Generator:
+        """
+        find documents in mongo from query
+        :param database_name: str
+        :param collection_name: str
+        :param projection: dict - fields required in the result - {"field1": 0, "field2": 1}
+        :param sort: list of tuples - sort parameters - [("field1", -1), ("field2", 1)]
+        :param fields: dict - filters for the query - {"field1" : "required_value"}
+        :return: generator object of the results
+        """
         collection = getattr(getattr(self._mongo_client, database_name), collection_name)
-        documents = collection.find(fields, projection)
+        if sort is None:
+            documents = collection.find(fields, projection)
+        else:
+            documents = collection.find(fields, projection).sort(sort)
         return (document for document in documents)
 
     def insert_documents(self, database_name: str, collection_name: str, documents: list):
