@@ -29,7 +29,7 @@ def update_quotes():
 def update_fundamentals():
     reuters = ReutersClient()
     data_to_insert = {'income': [], 'balance_sheet': [], 'cash_flow': []}
-    stocks_from_mongo = mongo_connector.find_documents('static', 'stocks')
+    stocks_from_mongo = mongo_connector.find_documents(database_name='static', collection_name='stocks')
 
     for stock in stocks_from_mongo:
         if stock.get('ric') is not None:
@@ -68,7 +68,8 @@ def get_balance_sheet_elements(ric, period, date=None):
     query_filter = {'ric': ric, 'period': period}
     if date:
         query_filter.update({'date': date})
-    balance_sheet_elems = mongo_connector.find_documents('fundamentals', 'balance_sheet', **query_filter)
+    balance_sheet_elems = mongo_connector.find_documents(database_name='fundamentals', collection_name='balance_sheet',
+                                                         **query_filter)
 
     return balance_sheet_elems
 
@@ -77,7 +78,8 @@ def get_income_statement_elements(ric, period, date=None):
     query_filter = {'ric': ric, 'period': period}
     if date:
         query_filter.update({'date': date})
-    income_statement_elems = mongo_connector.find_documents('fundamentals', 'income', **query_filter)
+    income_statement_elems = mongo_connector.find_documents(database_name='fundamentals', collection_name='income',
+                                                            **query_filter)
 
     return income_statement_elems
 
@@ -86,7 +88,8 @@ def get_cash_flow_statement_elements(ric, period, date=None):
     query_filter = {'ric': ric, 'period': period}
     if date:
         query_filter.update({'date': date})
-    cash_flow_statement_elems = mongo_connector.find_documents('fundamentals', 'cash_flow', **query_filter)
+    cash_flow_statement_elems = mongo_connector.find_documents(database_name='fundamentals',
+                                                               collection_name='cash_flow', **query_filter)
 
     return cash_flow_statement_elems
 
