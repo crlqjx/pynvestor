@@ -2,6 +2,7 @@ import requests
 import json
 import os
 import re
+import datetime as dt
 
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
@@ -50,6 +51,7 @@ class EuronextClient:
         resp = self._session.get(url)
         result = []
         for quote in resp.json():
+            quote['time'] = dt.datetime.strptime(quote['time'], "%Y-%m-%d %H:%M")
             quote.update({'isin': isin, 'mic': mic})
             result.append(quote)
         if not result:
