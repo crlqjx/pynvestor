@@ -1,30 +1,44 @@
 import pandas as pd
+import numpy as np
 
 from red_rat.app.portfolio import Portfolio
 from red_rat.app.helpers import Helpers
 
 
 class PortfolioRiskManager(Portfolio):
-    def __init__(self, risk_free_rate: float, is_volatility_from_nav: bool = True, portfolio_path: str = None):
+    def __init__(self, risk_free_rate: float, portfolio_path: str = None):
         super().__init__(portfolio_path)
+        self._helpers = Helpers()
 
-        self._is_volatility_from_nav = is_volatility_from_nav
-
+        self._compute_nav_volatility()
         self._compute_portfolio_volatility()
         self._compute_portfolio_sharpe_ratios(risk_free_rate)
         self._compute_portfolio_value_at_risk()
 
-    def _compute_portfolio_volatility(self):
+    def _compute_portfolio_volatility(self, lookback_days: int = 500):
+        weights = self.stocks_weights
+        returns = []
+        for isin, _ in weights.items():
+            returns.append(self._helpers.get_returns(isin=isin,
+                                                     sort=[("time", -1)],
+                                                     window=lookback_days + 1).values)
+
+        returns = np.stack(returns)
+        cov_matrix = np.cov(returns)
+        portfolio_variance = np.dot(np.array(list(weights.values())).T,
+                                    np.dot(cov_matrix,
+                                           np.array(list(weights.values()))))
+        self._covariance_matrix = cov_matrix
+        self._assets_std = {list(weights.keys())[i]: cov_matrix[i][i] for i in range(len(weights))}
+        self._portfolio_volatility = np.sqrt(portfolio_variance)
+        return
+
+    def _compute_nav_volatility(self):
         """
-        Compute portfolio volatility since inception
+        Compute portfolio volatility of NAV since inception
         :return: float value
         """
-        if self._is_volatility_from_nav:
-            self._portfolio_volatility = self.portfolio_weekly_returns.std()
-        else:
-            # TODO: compute portfolio vol from stocks vol and corr
-            pass
-        return
+        self._nav_volatility = self.portfolio_weekly_returns.std()
 
     def _compute_portfolio_sharpe_ratios(self, risk_free_rate):
         """
@@ -42,16 +56,15 @@ class PortfolioRiskManager(Portfolio):
                                          method: str = "historical",
                                          lookback_days: int = 500,
                                          percentile: int = 5):
-        helpers = Helpers()
 
         if method == "historical":
 
             # Get simulated historical portfolio value
             df_assets_market_values = pd.DataFrame()
             for isin, quantity in self.stocks_quantities.items():
-                prices_series = helpers.get_prices_from_mongo(isin=isin,
-                                                              sort=[("time", -1)],
-                                                              window=lookback_days + 1)
+                prices_series = self._helpers.get_prices_from_mongo(isin=isin,
+                                                                    sort=[("time", -1)],
+                                                                    window=lookback_days)
                 total_market_value = prices_series * quantity
                 df_assets_market_values[isin] = total_market_value
 
@@ -72,6 +85,14 @@ class PortfolioRiskManager(Portfolio):
 
         self._portfolio_value_at_risk = value_at_risk
         return
+
+    @property
+    def assets_std(self):
+        return self._assets_std
+
+    @property
+    def nav_volatility(self):
+        return self._nav_volatility
 
     @property
     def portfolio_volatility(self):
