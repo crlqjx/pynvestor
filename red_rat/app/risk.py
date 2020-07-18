@@ -4,8 +4,14 @@ import numpy as np
 from red_rat.app.portfolio import Portfolio
 from red_rat.app.helpers import Helpers
 
+helpers = Helpers()
+
 
 class PortfolioRiskManager(Portfolio):
+    """
+    class to manage portfolio risks
+    """
+
     def __init__(self, risk_free_rate: float, portfolio_path: str = None):
         super().__init__(portfolio_path)
         self._helpers = Helpers()
@@ -16,7 +22,12 @@ class PortfolioRiskManager(Portfolio):
         self._compute_portfolio_value_at_risk()
 
     def _compute_portfolio_volatility(self, lookback_days: int = 500):
-        weights = self.stocks_weights
+        """
+        compute portfolio volatility from the assets covariance matrix
+        :param lookback_days: number of days to look back from today
+        :return:
+        """
+        weights = np.array(list(self.stocks_weights.values()))
         returns = []
         for isin, _ in weights.items():
             returns.append(self._helpers.get_returns(isin=isin,
@@ -38,9 +49,9 @@ class PortfolioRiskManager(Portfolio):
         Compute portfolio volatility of NAV since inception
         :return: float value
         """
-        self._nav_volatility = self.portfolio_weekly_returns.std()
+        self._nav_volatility = self.nav_weekly_returns.std()
 
-    def _compute_portfolio_sharpe_ratios(self, risk_free_rate):
+    def _compute_portfolio_sharpe_ratio(self, risk_free_rate: float, lookback_days: int = 500):
         """
         compute portfolio sharpe ratios compared to a fixed risk-free rate
         :param risk_free_rate: float
@@ -56,6 +67,13 @@ class PortfolioRiskManager(Portfolio):
                                          method: str = "historical",
                                          lookback_days: int = 500,
                                          percentile: int = 5):
+        """
+        compute portfolio Value At Risk
+        :param method: method of computation for the value at risk
+        :param lookback_days: window range to look from today
+        :param percentile: confidence interval
+        :return:
+        """
 
         if method == "historical":
 

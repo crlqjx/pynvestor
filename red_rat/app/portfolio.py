@@ -7,6 +7,10 @@ from pandas import DataFrame
 
 class Portfolio:
     def __init__(self, portfolio_path=None):
+        """
+        Class to load portfolio positions and market data
+        :param portfolio_path: path to the portfolio file in json
+        """
         if portfolio_path is None:
             portfolio_path = Path(__file__).parent.parent.joinpath('portfolio.json')
         self._portfolio_path = portfolio_path
@@ -15,6 +19,10 @@ class Portfolio:
         self._get_portfolio()
 
     def _load_portfolio_positions(self):
+        """
+        method to load and store the portfolio positions
+        :return:
+        """
         with open(self._portfolio_path, 'r') as ptf:
             position = json.load(ptf)
         self._stocks_positions = position
@@ -31,6 +39,10 @@ class Portfolio:
         return
 
     def _get_euronext_data(self):
+        """
+        method to get market data from euronext
+        :return:
+        """
         instrument_details = {}
         prices = {}
         names = {}
@@ -64,7 +76,59 @@ class Portfolio:
         self._stocks_perf_since_last_close = perf_since_last_close
         return
 
+    def _get_weights(self):
+        """
+        method to get and store assets weights
+        :return:
+        """
+        weights = {}
+        for isin, market_value in self._stocks_market_values.items():
+            weights[isin] = market_value / self._portfolio_market_value
+        self._stocks_weights = weights
+
+        self._cash_weight = self._cash / self._portfolio_market_value
+        return
+
+    def _compute_portfolio_navs(self):
+        """
+        method to compute the portfolio net asset values
+        :return:
+        """
+        asset_values = self._mongo.find_documents(database_name='net_asset_values', collection_name='net_asset_values',
+                                                  projection={'_id': 0})
+
+        df_assets = DataFrame(asset_values).set_index('date')
+        df_assets['navs'] = df_assets['assets'] / df_assets['shares']
+        self._portfolio_navs = df_assets['navs']
+        return
+
+    def _compute_portfolio_returns(self):
+        """
+        method to compute the portfolio weekly returns from net asset values
+        :return:
+        """
+        self._nav_weekly_returns = self._portfolio_navs.pct_change()
+        return
+
+    def to_df(self):
+        """
+        method to get a dataframe representation of the portfolio data
+        :return: dataframe
+        """
+        data = [self._stocks_names, self._stocks_quantities, self._stocks_weights, self._stocks_prices,
+                self._stocks_perf_since_open, self._stocks_perf_since_last_close, self._stocks_market_values]
+        columns = ['name', 'quantity', 'weight', 'last price', 'perf since open', 'perf since last close',
+                   'market value']
+        df = DataFrame(data).T
+        df.columns = columns
+
+        return df
+
     def _get_portfolio(self):
+        """
+        method to launch to get all the portfolio data
+        :return:
+        """
         self._load_portfolio_positions()
         self._get_euronext_data()
 
@@ -81,38 +145,6 @@ class Portfolio:
         self._compute_portfolio_navs()
         self._compute_portfolio_returns()
         return
-
-    def _get_weights(self):
-        weights = {}
-        for isin, market_value in self._stocks_market_values.items():
-            weights[isin] = market_value / self._portfolio_market_value
-        self._stocks_weights = weights
-
-        self._cash_weight = self._cash / self._portfolio_market_value
-        return
-
-    def _compute_portfolio_navs(self):
-        asset_values = self._mongo.find_documents(database_name='net_asset_values', collection_name='net_asset_values',
-                                                  projection={'_id': 0})
-
-        df_assets = DataFrame(asset_values).set_index('date')
-        df_assets['navs'] = df_assets['assets'] / df_assets['shares']
-        self._portfolio_navs = df_assets['navs']
-        return
-
-    def _compute_portfolio_returns(self):
-        self._portfolio_weekly_returns = self._portfolio_navs.pct_change()
-        return
-
-    def to_df(self):
-        data = [self._stocks_names, self._stocks_quantities, self._stocks_weights, self._stocks_prices, self._stocks_perf_since_open,
-                self._stocks_perf_since_last_close, self._stocks_market_values]
-        columns = ['name', 'quantity', 'weight', 'last price', 'perf since open', 'perf since last close',
-                   'market value']
-        df = DataFrame(data).T
-        df.columns = columns
-
-        return df
 
     @property
     def stocks_quantities(self):
@@ -163,5 +195,5 @@ class Portfolio:
         return self._portfolio_navs
 
     @property
-    def portfolio_weekly_returns(self):
-        return self._portfolio_weekly_returns
+    def nav_weekly_returns(self):
+        return self._nav_weekly_returns
