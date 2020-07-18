@@ -14,11 +14,10 @@ class PortfolioRiskManager(Portfolio):
 
     def __init__(self, risk_free_rate: float, portfolio_path: str = None):
         super().__init__(portfolio_path)
-        self._helpers = Helpers()
 
         self._compute_nav_volatility()
         self._compute_portfolio_volatility()
-        self._compute_portfolio_sharpe_ratios(risk_free_rate)
+        self._compute_portfolio_sharpe_ratio(risk_free_rate)
         self._compute_portfolio_value_at_risk()
 
     def _compute_portfolio_volatility(self, lookback_days: int = 500):
@@ -29,18 +28,16 @@ class PortfolioRiskManager(Portfolio):
         """
         weights = np.array(list(self.stocks_weights.values()))
         returns = []
-        for isin, _ in weights.items():
-            returns.append(self._helpers.get_returns(isin=isin,
-                                                     sort=[("time", -1)],
-                                                     window=lookback_days + 1).values)
+        for isin, _ in self.stocks_weights.items():
+            returns.append(helpers.get_returns(isin=isin,
+                                               sort=[("time", -1)],
+                                               window=lookback_days + 1).values)
 
         returns = np.stack(returns)
-        cov_matrix = np.cov(returns)
-        portfolio_variance = np.dot(np.array(list(weights.values())).T,
-                                    np.dot(cov_matrix,
-                                           np.array(list(weights.values()))))
+
+        portfolio_variance, cov_matrix = helpers.compute_portfolio_variance(weights, returns)
         self._covariance_matrix = cov_matrix
-        self._assets_std = {list(weights.keys())[i]: cov_matrix[i][i] for i in range(len(weights))}
+        self._assets_std = {list(self.stocks_weights.keys())[i]: cov_matrix[i][i] for i in range(len(weights))}
         self._portfolio_volatility = np.sqrt(portfolio_variance)
         return
 
@@ -58,8 +55,17 @@ class PortfolioRiskManager(Portfolio):
         :return: series
         """
 
-        sharpe_ratios = (self.portfolio_weekly_returns - risk_free_rate) / self._portfolio_volatility
-        self._portfolio_sharpe_ratios = sharpe_ratios
+        weights = np.array(list(self.stocks_weights.values()))
+        mean_returns = []
+        for isin, _ in self._stocks_weights.items():
+            mean_returns.append(helpers.get_returns(isin=isin,
+                                                    sort=[("time", -1)],
+                                                    window=lookback_days + 1).values.mean())
+        mean_returns = np.array(mean_returns)
+        portfolio_return = np.sum(weights * mean_returns) * 252
+
+        sharpe_ratio = helpers.compute_sharpe_ratio(portfolio_return, self._portfolio_volatility, risk_free_rate)
+        self._portfolio_sharpe_ratio = sharpe_ratio
 
         return
 
@@ -80,9 +86,9 @@ class PortfolioRiskManager(Portfolio):
             # Get simulated historical portfolio value
             df_assets_market_values = pd.DataFrame()
             for isin, quantity in self.stocks_quantities.items():
-                prices_series = self._helpers.get_prices_from_mongo(isin=isin,
-                                                                    sort=[("time", -1)],
-                                                                    window=lookback_days)
+                prices_series = helpers.get_prices_from_mongo(isin=isin,
+                                                              sort=[("time", -1)],
+                                                              window=lookback_days)
                 total_market_value = prices_series * quantity
                 df_assets_market_values[isin] = total_market_value
 
@@ -117,8 +123,8 @@ class PortfolioRiskManager(Portfolio):
         return self._portfolio_volatility
 
     @property
-    def portfolio_sharpe_ratios(self):
-        return self._portfolio_sharpe_ratios
+    def portfolio_sharpe_ratio(self):
+        return self._portfolio_sharpe_ratio
 
     @property
     def portfolio_value_at_risk(self):
