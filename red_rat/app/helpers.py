@@ -1,4 +1,5 @@
 import datetime as dt
+import numpy as np
 import pandas as pd
 import itertools
 from red_rat.app.mongo_connector import MongoConnector
@@ -39,3 +40,13 @@ class Helpers:
         result = prices.pct_change()[1:]
         return result
 
+    @staticmethod
+    def compute_sharpe_ratio(mean_annualized_return, portfolio_vol, risk_free_rate):
+        result = ((mean_annualized_return - risk_free_rate) / portfolio_vol)
+        return result
+
+    @staticmethod
+    def compute_portfolio_variance(weights, returns):
+        cov_matrix = np.cov(returns) * 252
+        portfolio_variance = np.dot(weights.T, np.dot(cov_matrix, weights))
+        return portfolio_variance, cov_matrix
