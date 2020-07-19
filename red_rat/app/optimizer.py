@@ -14,7 +14,7 @@ class Optimizer(PortfolioRiskManager):
         for isin, _ in self.stocks_weights.items():
             returns.append(helpers.get_returns(isin=isin,
                                                sort=[("time", -1)],
-                                               window=lookback_days + 1).values)
+                                               window=lookback_days).values)
 
         returns = np.stack(returns)
 

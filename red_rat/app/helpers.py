@@ -19,7 +19,7 @@ class Helpers:
         query_result = self._mongo.find_documents(database_name='quotes', collection_name='equities',
                                                   projection=fields_required, sort=sort, **query_filter)
         if window is not None:
-            quotes = itertools.islice(query_result, window + 1)
+            quotes = itertools.islice(query_result, window)
         else:
             quotes = query_result
         quotes_series = pd.DataFrame(quotes).set_index('time')['price']
@@ -35,7 +35,7 @@ class Helpers:
                                             start_date=start_date,
                                             end_date=end_date,
                                             sort=sort,
-                                            window=window)
+                                            window=window + 1)
         prices.sort_index(ascending=True, inplace=True)
         result = prices.pct_change()[1:]
         return result
