@@ -8,15 +8,9 @@ class Optimizer(PortfolioRiskManager):
     def __init__(self, risk_free_rate: float, portfolio_path: str = None):
         super().__init__(risk_free_rate, portfolio_path)
 
-    def portfolio_min_var(self, lookback_days: int = 500, method: str = 'algo', mc_simulations: int = 100000):
-        returns = []
-        for isin, _ in self.stocks_weights.items():
-            returns.append(helpers.get_returns(isin=isin,
-                                               sort=[("time", -1)],
-                                               window=lookback_days).values)
-
-        returns = np.stack(returns)
-        mean_returns = np.array([returns[i].mean() for i in range(len(returns))])
+    def portfolio_min_var(self, method: str = 'algo', mc_simulations: int = 100000):
+        returns = self._histo_returns
+        mean_returns = self._mean_returns
 
         # Algorithmic method using minimize function of scipy
         if method.lower() == 'algo':

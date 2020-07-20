@@ -12,33 +12,42 @@ class PortfolioRiskManager(Portfolio):
     class to manage portfolio risks
     """
 
-    def __init__(self, risk_free_rate: float, portfolio_path: str = None):
+    def __init__(self, risk_free_rate: float, portfolio_path: str = None, lookback_days: int = 500):
         super().__init__(portfolio_path)
 
+        self._lookback_days = lookback_days
+
         self._compute_nav_volatility()
+        self._compute_assets_returns()
         self._compute_portfolio_volatility()
         self._compute_portfolio_sharpe_ratio(risk_free_rate)
         self._compute_portfolio_value_at_risk()
 
-    def _compute_portfolio_volatility(self, lookback_days: int = 500):
+    def _compute_assets_returns(self):
         """
-        compute portfolio volatility from the assets covariance matrix
-        :param lookback_days: number of days to look back from today
+        Compute assets daily returns
         :return:
         """
-        weights = np.array(list(self.stocks_weights.values()))
         returns = []
         for isin, _ in self.stocks_weights.items():
             returns.append(helpers.get_returns(isin=isin,
                                                sort=[("time", -1)],
-                                               window=lookback_days).values)
+                                               window=self._lookback_days).values)
 
         returns = np.stack(returns)
+        self._histo_returns = returns
 
-        portfolio_variance, cov_matrix = helpers.compute_portfolio_variance(weights, returns)
+    def _compute_portfolio_volatility(self):
+        """
+        compute portfolio volatility from the assets covariance matrix
+        :return:
+        """
+        weights = np.array(list(self.stocks_weights.values()))
+
+        portfolio_variance, cov_matrix = helpers.compute_portfolio_variance(weights, self._histo_returns)
         self._covariance_matrix = cov_matrix
         self._assets_std = {list(self.stocks_weights.keys())[i]: cov_matrix[i][i] for i in range(len(weights))}
-        self._portfolio_volatility = np.sqrt(portfolio_variance)
+        self._annualized_portfolio_volatility = np.sqrt(portfolio_variance)
         return
 
     def _compute_nav_volatility(self):
@@ -48,7 +57,7 @@ class PortfolioRiskManager(Portfolio):
         """
         self._nav_volatility = self.nav_weekly_returns.std()
 
-    def _compute_portfolio_sharpe_ratio(self, risk_free_rate: float, lookback_days: int = 500):
+    def _compute_portfolio_sharpe_ratio(self, risk_free_rate: float):
         """
         compute portfolio sharpe ratios compared to a fixed risk-free rate
         :param risk_free_rate: float
@@ -56,27 +65,24 @@ class PortfolioRiskManager(Portfolio):
         """
 
         weights = np.array(list(self.stocks_weights.values()))
-        mean_returns = []
-        for isin, _ in self._stocks_weights.items():
-            mean_returns.append(helpers.get_returns(isin=isin,
-                                                    sort=[("time", -1)],
-                                                    window=lookback_days).values.mean())
-        mean_returns = np.array(mean_returns)
-        portfolio_return = np.sum(weights * mean_returns) * 252
+        mean_returns = np.array([self._histo_returns[i].mean() for i in range(len(self._histo_returns))])
+        self._mean_returns = mean_returns
+        annualized_mean_returns = (1 + mean_returns) ** 252 - 1
+        annualized_portfolio_return = np.sum(weights * annualized_mean_returns)
 
-        sharpe_ratio = helpers.compute_sharpe_ratio(portfolio_return, self._portfolio_volatility, risk_free_rate)
+        sharpe_ratio = helpers.compute_sharpe_ratio(annualized_portfolio_return,
+                                                    self._annualized_portfolio_volatility,
+                                                    risk_free_rate)
         self._portfolio_sharpe_ratio = sharpe_ratio
 
         return
 
     def _compute_portfolio_value_at_risk(self,
                                          method: str = "historical",
-                                         lookback_days: int = 500,
                                          percentile: int = 5):
         """
         compute portfolio Value At Risk
         :param method: method of computation for the value at risk
-        :param lookback_days: window range to look from today
         :param percentile: confidence interval
         :return:
         """
@@ -88,7 +94,7 @@ class PortfolioRiskManager(Portfolio):
             for isin, quantity in self.stocks_quantities.items():
                 prices_series = helpers.get_prices_from_mongo(isin=isin,
                                                               sort=[("time", -1)],
-                                                              window=lookback_days)
+                                                              window=self._lookback_days)
                 total_market_value = prices_series * quantity
                 df_assets_market_values[isin] = total_market_value
 
@@ -111,6 +117,10 @@ class PortfolioRiskManager(Portfolio):
         return
 
     @property
+    def lookback_days(self):
+        return self._lookback_days
+
+    @property
     def assets_std(self):
         return self._assets_std
 
@@ -119,8 +129,8 @@ class PortfolioRiskManager(Portfolio):
         return self._nav_volatility
 
     @property
-    def portfolio_volatility(self):
-        return self._portfolio_volatility
+    def annualized_portfolio_volatility(self):
+        return self._annualized_portfolio_volatility
 
     @property
     def portfolio_sharpe_ratio(self):
