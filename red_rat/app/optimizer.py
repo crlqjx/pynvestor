@@ -8,7 +8,7 @@ class Optimizer(PortfolioRiskManager):
     def __init__(self, risk_free_rate: float, portfolio_path: str = None):
         super().__init__(risk_free_rate, portfolio_path)
 
-    def portfolio_min_var(self, method: str = 'algo', mc_simulations: int = 100000):
+    def min_var(self, method: str = 'algo', mc_simulations: int = 100000):
         returns = self._histo_returns
         mean_returns = self._mean_returns
 
