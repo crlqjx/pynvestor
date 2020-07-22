@@ -4,14 +4,12 @@ import json
 from requests.exceptions import HTTPError
 from red_rat import logger
 from red_rat.app.mongo_connector import MongoConnector
-from red_rat.app.market_data_provider import EuronextClient
-from red_rat.app.reuters_client import ReutersClient
+from red_rat.app.market_data_provider import EuronextClient, ReutersClient
 
 mongo_connector = MongoConnector()
 market_data_provider = EuronextClient()
 
-# TODO: gather fundamental data per stock into dataframe
-# TODO: filter stocks from fundamental data
+# TODO: compute financial ratios
 # TODO: TOR https://www.sylvaindurand.fr/use-tor-with-python/
 
 
