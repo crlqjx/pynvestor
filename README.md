@@ -1,5 +1,7 @@
 ## PYNVESTOR
 
+*** This project has an education purpose only ***
+
 Tool to monitor a stock portfolio.
 Prices are from Euronext
 
