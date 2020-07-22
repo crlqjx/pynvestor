@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from red_rat.app.market_data_provider import EuronextClient
+from red_rat.app.data_providers import EuronextClient
 from red_rat.app.mongo_connector import MongoConnector
 from pandas import DataFrame
 

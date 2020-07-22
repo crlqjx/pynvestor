@@ -4,7 +4,7 @@ import json
 from requests.exceptions import HTTPError
 from red_rat import logger
 from red_rat.app.mongo_connector import MongoConnector
-from red_rat.app.market_data_provider import EuronextClient, ReutersClient
+from red_rat.app.data_providers import EuronextClient, ReutersClient
 
 mongo_connector = MongoConnector()
 market_data_provider = EuronextClient()
