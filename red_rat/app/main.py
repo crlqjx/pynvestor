@@ -1,5 +1,7 @@
 import datetime as dt
+import json
 
+from requests.exceptions import HTTPError
 from red_rat import logger
 from red_rat.app.mongo_connector import MongoConnector
 from red_rat.app.market_data_provider import EuronextClient
@@ -8,7 +10,6 @@ from red_rat.app.reuters_client import ReutersClient
 mongo_connector = MongoConnector()
 market_data_provider = EuronextClient()
 
-# TODO: update transcodification db
 # TODO: gather fundamental data per stock into dataframe
 # TODO: filter stocks from fundamental data
 # TODO: TOR https://www.sylvaindurand.fr/use-tor-with-python/
@@ -28,38 +29,47 @@ def update_quotes():
 @logger
 def update_fundamentals():
     reuters = ReutersClient()
+    with open(r"D:\Python Projects\red_rat\red_rat\static\rics.json", "r") as f:
+        ric_codes = json.load(f)
+
     data_to_insert = {'income': [], 'balance_sheet': [], 'cash_flow': []}
-    stocks_from_mongo = mongo_connector.find_documents(database_name='static', collection_name='stocks')
 
-    for stock in stocks_from_mongo:
-        if stock.get('ric') is not None:
-            symbol = stock['ric']
-        else:
-            symbol = stock['symbol']
+    for symbol in ric_codes.values():
+        if symbol is None:
+            continue
 
-        fundamentals = reuters.get_financial_data(symbol)
-        if fundamentals.get('status') and fundamentals['status']['code'] == 200:
-            # if ric is not entered in DB, fill it
-            if stock.get('ric') is None:
-                mongo_connector.mongo_client.static.stocks.update({'_id': stock['_id']},
-                                                                  {'$set': {'ric': stock['symbol']}})
+        logger.log.info(f'{symbol}: Getting financials')
 
-            for statement, statement_data in fundamentals['market_data']['financial_statements'].items():
-                for period, income_statements in statement_data.items():
-                    for report_elem, reports in income_statements.items():
-                        assert isinstance(reports, list)
-                        for report in reports:
-                            data = {'ric': fundamentals['ric'],
-                                    'period': period,
-                                    'report_elem': report_elem,
-                                    'date': dt.datetime.fromisoformat(report['date']),
-                                    'value': float(report['value'])}
+        try:
+            financials = reuters.get_financial_data(symbol)
+        except HTTPError as http_error:
+            logger.log.warning(f'{symbol}: {http_error}')
+            continue
 
-                            data_to_insert[statement].append(data)
-        else:
-            logger.log.warning(f'{stock["symbol"]}: could not find fundamental data from reuters')
+        try:
+            financial_statements = financials['market_data'].get('financial_statements')
+            assert financial_statements is not None, 'could not find financials from reuters'
+        except KeyError as key_error:
+            logger.log.warning(f'{symbol}: {key_error}')
+            continue
+        except AssertionError as assertion_error:
+            logger.log.warning(f'{symbol}: {assertion_error}')
+            continue
+
+        for statement, statement_data in financial_statements.items():
+            for period, income_statements in statement_data.items():
+                for report_elem, reports in income_statements.items():
+                    assert isinstance(reports, list)
+                    for report in reports:
+                        data = {'ric': financials['ric'],
+                                'period': period,
+                                'date': dt.datetime.fromisoformat(report['date']),
+                                'report_elem': report_elem,
+                                'value': float(report['value'])}
+
+                        data_to_insert[statement].append(data)
     for statement in data_to_insert:
-        mongo_connector.insert_documents(database_name='fundamentals',
+        mongo_connector.insert_documents(database_name='financials',
                                          collection_name=statement,
                                          documents=data_to_insert[statement])
 
@@ -95,6 +105,6 @@ def get_cash_flow_statement_elements(ric, period, date=None):
 
 
 if __name__ == '__main__':
-    update_quotes()
-    # update_fundamentals()
+    # update_quotes()
+    update_fundamentals()
     pass
