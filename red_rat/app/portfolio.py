@@ -2,6 +2,8 @@ import json
 from pathlib import Path
 from red_rat.app.data_providers import EuronextClient
 from red_rat.app.mongo_connector import MongoConnector
+from red_rat.models.position import Position
+from red_rat.models.asset_type import AssetType
 from pandas import DataFrame
 
 
@@ -24,15 +26,15 @@ class Portfolio:
         :return:
         """
         with open(self._portfolio_path, 'r') as ptf:
-            position = json.load(ptf)
-        self._stocks_positions = position
+            position_json = json.load(ptf)
+        self._stocks_positions = [Position(**pos) for pos in position_json]
 
         quantities = {}
         for position in self._stocks_positions:
-            if position['type'].lower() == 'cash':
-                self._cash = position['quantity']
+            if position.asset_type is AssetType.CASH:
+                self._cash = position.quantity
             else:
-                quantities[position['isin']] = int(position['quantity'])
+                quantities[position.isin] = int(position.quantity)
 
         self._stocks_quantities = quantities
         assert self._stocks_quantities is not None, 'Could not retrieve quantities'
@@ -49,18 +51,21 @@ class Portfolio:
         perf_since_open = {}
         perf_since_last_close = {}
         for position in self._stocks_positions:
-            if position['type'] != 'Cash':
-                isin = position['isin']
-                mic = position['mic']
+            if position.asset_type is not AssetType.CASH:
+                isin = position.isin
+                mic = position.mic
                 euronext_data = self._euronext.get_instrument_details(isin, mic)['instr']
 
                 # Get instrument details
                 instrument_details[isin] = euronext_data
+
                 # Get prices
                 price = float(euronext_data['currInstrSess']['lastPx'])
                 prices[isin] = price
+
                 # Get names
                 names[isin] = euronext_data['longNm']
+
                 # Get perfs
                 for perf in euronext_data['perf']:
                     if perf['perType'] == 'D':
