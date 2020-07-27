@@ -2,6 +2,7 @@ import datetime as dt
 import numpy as np
 import pandas as pd
 import itertools
+import json
 from red_rat.app.mongo_connector import MongoConnector
 
 
@@ -50,3 +51,23 @@ class Helpers:
         cov_matrix = np.cov(returns) * 252
         portfolio_variance = np.dot(weights.T, np.dot(cov_matrix, weights))
         return portfolio_variance, cov_matrix
+
+    @staticmethod
+    def transco_isin_ric(**isin_or_ric):
+        isin = isin_or_ric.get('isin')
+        ric = isin_or_ric.get('ric')
+
+        with open(r"D:\Python Projects\red_rat\red_rat\static\rics.json", 'r') as f:
+            isins_to_rics = json.load(f)
+            rics_to_isins = {value: key for key, value in isins_to_rics.items()}
+
+        if (isin is None and ric is None) or (isin is not None and ric is not None):
+            raise ValueError('Enter either isin or ric')
+
+        if isin is not None and ric is None:
+            ric = isins_to_rics[isin]
+
+        if ric is not None and isin is None:
+            isin = rics_to_isins[ric]
+
+        return isin, ric
