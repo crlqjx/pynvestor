@@ -188,6 +188,10 @@ class Portfolio:
         return self._stocks_names
 
     @property
+    def stocks_positions(self):
+        return self._stocks_positions
+
+    @property
     def stocks_perf_since_open(self):
         return self._stocks_perf_since_open
 
