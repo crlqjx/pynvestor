@@ -22,6 +22,9 @@ class MarketDataProvider:
         self._session.mount("https://", adapter)
         self._session.mount("http://", adapter)
 
+    def __repr__(self):
+        return self.__class__.__name__
+
 
 class EuronextClient(MarketDataProvider):
     def __init__(self):
@@ -41,7 +44,25 @@ class EuronextClient(MarketDataProvider):
 
         return all_stocks
 
-    def get_instrument_details(self, isin, mic):
+    @logger
+    def search_in_euronext(self, query):
+        url = f"https://live.euronext.com/fr/instrumentSearch/searchJSON?q={query}"
+        resp = self._session.get(url)
+        resp.raise_for_status()
+        result = resp.json()
+        result.pop(-1)
+        return result
+
+    def get_mic_from_isin(self, isin):
+        stock_data = self.search_in_euronext(isin)
+        assert len(stock_data) > 0, f'No result found for {isin}'
+        assert len(stock_data) == 1, f'Many results found for {isin}'
+        return stock_data[0]['mic']
+
+    @logger
+    def get_instrument_details(self, isin, mic=None):
+        if mic is None:
+            mic = self.get_mic_from_isin(isin)
         url = f"https://gateway.euronext.com/api/instrumentDetail?code={isin}&codification=ISIN&exchCode={mic}&" \
               f"sessionQuality=RT&view=FULL" \
               f"&authKey={config['euronextapikey']}"
@@ -49,6 +70,7 @@ class EuronextClient(MarketDataProvider):
         resp.raise_for_status()
         return resp.json()
 
+    @logger
     def get_quotes(self, isin, mic, period):
         assert period in ['max', 'intraday'], f'period {period} is not available'
 
@@ -88,11 +110,13 @@ class ReutersClient(MarketDataProvider):
         super().__init__()
         self._url = rf"https://www.reuters.com/companies/api/"
 
+    @logger
     def get_financial_data(self, ric):
         resp = self._session.get(f'{self._url}getFetchCompanyFinancials/{ric}')
         resp.raise_for_status()
         return resp.json()
 
+    @logger
     def get_company_profile(self, ric):
         resp = self._session.get(f'{self._url}getFetchCompanyProfile/{ric}')
         resp.raise_for_status()
