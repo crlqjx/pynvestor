@@ -29,12 +29,13 @@ class Logger:
         @functools.wraps(func)
         def with_logging(*args, **kwargs):
             try:
-                self.log.debug(f"{func.__name__}")
+                self.log.debug(f"{func.__name__} - {args}")
                 timer_start = dt.datetime.now()
                 result = func(*args, **kwargs)
                 timer_end = dt.datetime.now()
                 timer = timer_end - timer_start
-                self.log.debug(f"executed {func.__name__} in {round(timer.total_seconds(), 2)} seconds")
+                log_message = f"executed {func.__name__} in {round(timer.total_seconds(), 2)} seconds - {args}"
+                self.log.debug(log_message)
                 return result
             except Exception as e:
                 self.log.critical(f"Exception {type(e)}: {str(e)}")
