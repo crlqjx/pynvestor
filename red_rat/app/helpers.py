@@ -27,6 +27,11 @@ class Helpers:
         quotes_series.index = quotes_series.index.normalize()
         return quotes_series
 
+    def get_price_from_mongo(self, isin, price_date):
+        price = self.get_prices_from_mongo(isin, price_date, price_date + dt.timedelta(days=1))
+        assert len(price) == 1, f'more than one last price founded for {price_date}'
+        return price[0]
+
     def get_returns(self, isin: str,
                     start_date: dt.datetime = dt.datetime(2000, 1, 1),
                     end_date: dt.datetime = dt.datetime.today(),
