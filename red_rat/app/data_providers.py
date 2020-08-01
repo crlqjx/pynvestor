@@ -55,14 +55,17 @@ class EuronextClient(MarketDataProvider):
 
     def get_mic_from_isin(self, isin):
         stock_data = self.search_in_euronext(isin)
-        assert len(stock_data) > 0, f'No result found for {isin}'
+        assert len(stock_data) > 0, ValueError(f'No result found for {isin}')
         assert len(stock_data) == 1, f'Many results found for {isin}'
         return stock_data[0]['mic']
 
     @logger
     def get_instrument_details(self, isin, mic=None):
         if mic is None:
-            mic = self.get_mic_from_isin(isin)
+            try:
+                mic = self.get_mic_from_isin(isin)
+            except AssertionError as e:
+                raise AssertionError(f'{e}: specify mic')
         url = f"https://gateway.euronext.com/api/instrumentDetail?code={isin}&codification=ISIN&exchCode={mic}&" \
               f"sessionQuality=RT&view=FULL" \
               f"&authKey={config['euronextapikey']}"
