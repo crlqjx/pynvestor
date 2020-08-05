@@ -39,7 +39,7 @@ class Portfolio:
 
         self._stocks_quantities = quantities
         assert self._stocks_quantities is not None, 'Could not retrieve quantities'
-        return
+        return True
 
     def _get_euronext_data(self):
         """
@@ -80,7 +80,7 @@ class Portfolio:
         self._stocks_names = names
         self._stocks_perf_since_open = perf_since_open
         self._stocks_perf_since_last_close = perf_since_last_close
-        return
+        return True
 
     def _get_cash_balance_as_of(self, at_date: dt.datetime):
         """
@@ -123,7 +123,7 @@ class Portfolio:
         self._stocks_weights = weights
 
         self._cash_weight = self._cash / self._portfolio_market_value
-        return
+        return True
 
     def _compute_portfolio_navs(self):
         """
@@ -136,7 +136,7 @@ class Portfolio:
         df_assets = DataFrame(asset_values).set_index('date')
         df_assets['navs'] = df_assets['assets'] / df_assets['shares']
         self._portfolio_navs = df_assets['navs']
-        return
+        return True
 
     def _compute_portfolio_returns(self):
         """
@@ -144,7 +144,7 @@ class Portfolio:
         :return:
         """
         self._nav_weekly_returns = self._portfolio_navs.pct_change()
-        return
+        return True
 
     def compute_portfolio_nav(self, nav_date: dt.datetime):
         stocks_valuation = {}
@@ -195,7 +195,7 @@ class Portfolio:
         self._get_weights()
         self._compute_portfolio_navs()
         self._compute_portfolio_returns()
-        return
+        return True
 
     @property
     def stocks_quantities(self):

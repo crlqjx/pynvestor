@@ -34,6 +34,7 @@ class PortfolioRiskManager(Portfolio):
 
         returns = np.stack(returns)
         self._histo_returns = returns
+        return True
 
     def _compute_portfolio_volatility(self):
         """
@@ -46,7 +47,7 @@ class PortfolioRiskManager(Portfolio):
         self._covariance_matrix = cov_matrix
         self._assets_std = {list(self.stocks_weights.keys())[i]: cov_matrix[i][i] for i in range(len(weights))}
         self._annualized_portfolio_volatility = np.sqrt(portfolio_variance)
-        return
+        return True
 
     def _compute_nav_volatility(self):
         """
@@ -54,6 +55,7 @@ class PortfolioRiskManager(Portfolio):
         :return: float value
         """
         self._nav_volatility = self.nav_weekly_returns.std()
+        return True
 
     def _compute_portfolio_sharpe_ratio(self, risk_free_rate: float):
         """
@@ -73,7 +75,7 @@ class PortfolioRiskManager(Portfolio):
                                                     risk_free_rate)
         self._portfolio_sharpe_ratio = sharpe_ratio
 
-        return
+        return True
 
     def _compute_portfolio_value_at_risk(self,
                                          method: str = "historical",
@@ -112,7 +114,7 @@ class PortfolioRiskManager(Portfolio):
             raise NotImplementedError
 
         self._portfolio_value_at_risk = value_at_risk
-        return
+        return True
 
     @property
     def lookback_days(self):
