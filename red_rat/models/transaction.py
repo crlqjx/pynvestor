@@ -105,7 +105,7 @@ class StockSplit(Transaction):
         self.transaction_type = TransactionType.STOCK_DIVIDEND
         self.transaction_date = transaction_date
         self.isin = isin.strip()
-        self.mic = mic.strop()
+        self.mic = mic.strip()
         self.quantity = new_quantity
         self.notes = notes
 
