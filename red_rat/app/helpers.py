@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import itertools
 import json
-from red_rat import mongo
+from red_rat.app import mongo
 
 
 class Helpers:

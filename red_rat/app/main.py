@@ -2,7 +2,8 @@ import datetime as dt
 import json
 
 from requests.exceptions import HTTPError
-from red_rat import logger, mongo, euronext, reuters
+from red_rat import logger
+from red_rat.app import mongo, euronext, reuters
 
 
 # TODO: compute financial ratios

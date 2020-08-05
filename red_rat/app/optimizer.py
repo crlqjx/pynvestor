@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy import optimize
 from red_rat.app.risk import PortfolioRiskManager
-from red_rat import helpers
+from red_rat.app import helpers
 
 
 class Optimizer(PortfolioRiskManager):

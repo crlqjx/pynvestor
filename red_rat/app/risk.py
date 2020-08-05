@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 from red_rat.app.portfolio import Portfolio
-from red_rat import helpers
+from red_rat.app import helpers
 
 
 class PortfolioRiskManager(Portfolio):

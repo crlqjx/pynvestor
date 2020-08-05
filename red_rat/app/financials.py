@@ -1,5 +1,5 @@
 import datetime as dt
-from red_rat import euronext, reuters, mongo, helpers
+from red_rat.app import euronext, reuters, mongo, helpers
 
 
 class Financials:
