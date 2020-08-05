@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
-from red_rat.app.data_providers import EuronextClient
-from red_rat.app.mongo_connector import MongoConnector
+from red_rat import euronext, helpers, mongo
 from red_rat.models.position import Position
 from red_rat.models.asset_type import AssetType
 from pandas import DataFrame
@@ -16,8 +15,9 @@ class Portfolio:
         if portfolio_path is None:
             portfolio_path = Path(__file__).parent.parent.joinpath('portfolio.json')
         self._portfolio_path = portfolio_path
-        self._euronext = EuronextClient()
-        self._mongo = MongoConnector()
+        self._euronext = euronext
+        self._mongo = mongo
+        self._helpers = helpers
         self._get_portfolio()
 
     def _load_portfolio_positions(self):

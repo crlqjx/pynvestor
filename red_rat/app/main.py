@@ -2,12 +2,8 @@ import datetime as dt
 import json
 
 from requests.exceptions import HTTPError
-from red_rat import logger
-from red_rat.app.mongo_connector import MongoConnector
-from red_rat.app.data_providers import EuronextClient, ReutersClient
+from red_rat import logger, mongo, euronext, reuters
 
-mongo_connector = MongoConnector()
-market_data_provider = EuronextClient()
 
 # TODO: compute financial ratios
 # TODO: TOR https://www.sylvaindurand.fr/use-tor-with-python/
@@ -15,18 +11,17 @@ market_data_provider = EuronextClient()
 
 @logger
 def update_quotes():
-    filtered_stocks = (stock for stock in market_data_provider.all_stocks if stock['mic'] in ['XPAR', 'ALXP'])
+    filtered_stocks = (stock for stock in euronext.all_stocks if stock['mic'] in ['XPAR', 'ALXP'])
     for stock in filtered_stocks:
         logger.log.info(f'updating {stock}')
-        quotes = market_data_provider.get_quotes(stock['isin'], stock['mic'], 'max')
+        quotes = euronext.get_quotes(stock['isin'], stock['mic'], 'max')
         if quotes:
-            mongo_connector.insert_documents('quotes', 'equities', quotes)
+            mongo.insert_documents('quotes', 'equities', quotes)
     return
 
 
 @logger
 def update_fundamentals():
-    reuters = ReutersClient()
     with open(r"D:\Python Projects\red_rat\red_rat\static\rics.json", "r") as f:
         ric_codes = json.load(f)
 
@@ -67,17 +62,17 @@ def update_fundamentals():
 
                         data_to_insert[statement].append(data)
     for statement in data_to_insert:
-        mongo_connector.insert_documents(database_name='financials',
-                                         collection_name=statement,
-                                         documents=data_to_insert[statement])
+        mongo.insert_documents(database_name='financials',
+                               collection_name=statement,
+                               documents=data_to_insert[statement])
 
 
 def get_balance_sheet_elements(ric, period, date=None):
     query_filter = {'ric': ric, 'period': period}
     if date:
         query_filter.update({'date': date})
-    balance_sheet_elems = mongo_connector.find_documents(database_name='fundamentals', collection_name='balance_sheet',
-                                                         **query_filter)
+    balance_sheet_elems = mongo.find_documents(database_name='fundamentals', collection_name='balance_sheet',
+                                               **query_filter)
 
     return balance_sheet_elems
 
@@ -86,8 +81,8 @@ def get_income_statement_elements(ric, period, date=None):
     query_filter = {'ric': ric, 'period': period}
     if date:
         query_filter.update({'date': date})
-    income_statement_elems = mongo_connector.find_documents(database_name='fundamentals', collection_name='income',
-                                                            **query_filter)
+    income_statement_elems = mongo.find_documents(database_name='fundamentals', collection_name='income',
+                                                  **query_filter)
 
     return income_statement_elems
 
@@ -96,13 +91,13 @@ def get_cash_flow_statement_elements(ric, period, date=None):
     query_filter = {'ric': ric, 'period': period}
     if date:
         query_filter.update({'date': date})
-    cash_flow_statement_elems = mongo_connector.find_documents(database_name='fundamentals',
-                                                               collection_name='cash_flow', **query_filter)
+    cash_flow_statement_elems = mongo.find_documents(database_name='fundamentals',
+                                                     collection_name='cash_flow', **query_filter)
 
     return cash_flow_statement_elems
 
 
 if __name__ == '__main__':
-    # update_quotes()
+    update_quotes()
     update_fundamentals()
     pass

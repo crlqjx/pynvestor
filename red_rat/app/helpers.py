@@ -3,12 +3,12 @@ import numpy as np
 import pandas as pd
 import itertools
 import json
-from red_rat.app.mongo_connector import MongoConnector
+from red_rat import mongo
 
 
 class Helpers:
     def __init__(self):
-        self._mongo = MongoConnector()
+        self._mongo = mongo
 
     def get_prices_from_mongo(self, isin: str,
                               start_date: dt.datetime = dt.datetime(2000, 1, 1),
