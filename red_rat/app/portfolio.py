@@ -1,9 +1,10 @@
 import json
+import datetime as dt
 from pathlib import Path
 from red_rat import euronext, helpers, mongo
 from red_rat.models.position import Position
 from red_rat.models.asset_type import AssetType
-from pandas import DataFrame
+from pandas import DataFrame, Series
 
 
 class Portfolio:
@@ -81,6 +82,36 @@ class Portfolio:
         self._stocks_perf_since_last_close = perf_since_last_close
         return
 
+    def _get_cash_balance_as_of(self, at_date: dt.datetime):
+        """
+        method to get the cash balance from transactions
+        :param at_date: datetime
+        :return: float
+        """
+
+        transactions = self._mongo.find_documents(database_name='transactions',
+                                                  collection_name='transactions',
+                                                  projection={'_id': 0, 'net_cashflow': 1},
+                                                  **{'transaction_date': {'$lte': at_date}})
+        transactions = [list(transaction.values())[0] for transaction in transactions]
+        cash_balance = Series(transactions).sum()
+        return cash_balance
+
+    def _get_positions_as_of(self, at_date: dt.datetime):
+
+        transactions_quantities = self._mongo.find_documents(database_name='transactions',
+                                                             collection_name='transactions',
+                                                             projection={'_id': 0, 'isin': 1, 'quantity': 1, 'mic': 1},
+                                                             **{'transaction_date': {'$lte': at_date},
+                                                                'isin': {'$ne': None}})
+        transactions_quantities = [transactions for transactions in transactions_quantities]
+        df = DataFrame(transactions_quantities).groupby('isin').sum()
+        positions = df[df['quantity'] != 0.0]
+        positions['asset_type'] = 'equity'
+        positions.reset_index(inplace=True)
+
+        return [Position(**pos) for pos in positions.to_dict('records')]
+
     def _get_weights(self):
         """
         method to get and store assets weights
@@ -114,6 +145,21 @@ class Portfolio:
         """
         self._nav_weekly_returns = self._portfolio_navs.pct_change()
         return
+
+    def compute_portfolio_nav(self, nav_date: dt.datetime):
+        stocks_valuation = {}
+        for isin, quantity in self._stocks_quantities.items():
+            price = self._helpers.get_price_from_mongo(isin, nav_date)
+            valuation = price * quantity
+            stocks_valuation[isin] = valuation
+
+        nav = Series(list(stocks_valuation.values())).sum() + self._cash
+
+        return nav
+
+    @staticmethod
+    def save_portfolio_nav(self, nav, nav_date, cashflows=0.0, shares=None):
+        pass
 
     def to_df(self):
         """
