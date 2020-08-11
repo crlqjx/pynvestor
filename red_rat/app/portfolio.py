@@ -1,7 +1,8 @@
 import json
 import datetime as dt
 from pathlib import Path
-from red_rat.app import euronext, helpers, mongo
+from red_rat.app import euronext, mongo
+from red_rat.app.helpers import Helpers
 from red_rat.models.position import Position
 from red_rat.models.asset_type import AssetType
 from pandas import DataFrame, Series
@@ -18,7 +19,7 @@ class Portfolio:
         self._portfolio_path = portfolio_path
         self._euronext = euronext
         self._mongo = mongo
-        self._helpers = helpers
+        self._helpers = Helpers()
         self._get_portfolio()
 
     def _load_portfolio_positions(self):
@@ -97,7 +98,7 @@ class Portfolio:
         cash_balance = Series(transactions).sum()
         return Position(**{'asset_type': 'CASH', 'quantity': cash_balance})
 
-    def _get_positions_as_of(self, at_date: dt.datetime):
+    def _get_equity_positions_as_of(self, at_date: dt.datetime):
 
         transactions_quantities = self._mongo.find_documents(database_name='transactions',
                                                              collection_name='transactions',
@@ -112,8 +113,8 @@ class Portfolio:
 
         return [Position(**pos) for pos in positions.to_dict('records')]
 
-    def _get_portfolio_as_of(self, at_date: dt.datetime):
-        return self._get_portfolio_as_of(at_date) + [self._get_cash_balance_as_of(at_date)]
+    def _get_portfolio_positions_as_of(self, at_date: dt.datetime):
+        return self._get_equity_positions_as_of(at_date) + [self._get_cash_balance_as_of(at_date)]
 
     def _get_weights(self):
         """

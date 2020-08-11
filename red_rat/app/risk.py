@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 from red_rat.app.portfolio import Portfolio
-from red_rat.app import helpers
+from red_rat.app.helpers import Helpers
 
 
 class PortfolioRiskManager(Portfolio):
@@ -28,7 +28,7 @@ class PortfolioRiskManager(Portfolio):
         """
         returns = []
         for isin, _ in self.stocks_weights.items():
-            returns.append(helpers.get_returns(isin=isin,
+            returns.append(Helpers.get_returns(isin=isin,
                                                sort=[("time", -1)],
                                                window=self._lookback_days).values)
 
@@ -43,7 +43,7 @@ class PortfolioRiskManager(Portfolio):
         """
         weights = np.array(list(self.stocks_weights.values()))
 
-        portfolio_variance, cov_matrix = helpers.compute_portfolio_variance(weights, self._histo_returns)
+        portfolio_variance, cov_matrix = Helpers.compute_portfolio_variance(weights, self._histo_returns)
         self._covariance_matrix = cov_matrix
         self._assets_std = {list(self.stocks_weights.keys())[i]: cov_matrix[i][i] for i in range(len(weights))}
         self._annualized_portfolio_volatility = np.sqrt(portfolio_variance)
@@ -70,7 +70,7 @@ class PortfolioRiskManager(Portfolio):
         annualized_mean_returns = (1 + mean_returns) ** 252 - 1
         annualized_portfolio_return = np.sum(weights * annualized_mean_returns)
 
-        sharpe_ratio = helpers.compute_sharpe_ratio(annualized_portfolio_return,
+        sharpe_ratio = Helpers.compute_sharpe_ratio(annualized_portfolio_return,
                                                     self._annualized_portfolio_volatility,
                                                     risk_free_rate)
         self._portfolio_sharpe_ratio = sharpe_ratio
@@ -92,9 +92,9 @@ class PortfolioRiskManager(Portfolio):
             # Get simulated historical portfolio value
             df_assets_market_values = pd.DataFrame()
             for isin, quantity in self.stocks_quantities.items():
-                prices_series = helpers.get_prices_from_mongo(isin=isin,
-                                                              sort=[("time", -1)],
-                                                              window=self._lookback_days)
+                prices_series = self._helpers.get_prices_from_mongo(isin=isin,
+                                                                    sort=[("time", -1)],
+                                                                    window=self._lookback_days)
                 total_market_value = prices_series * quantity
                 df_assets_market_values[isin] = total_market_value
 

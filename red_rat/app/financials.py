@@ -1,5 +1,6 @@
 import datetime as dt
-from red_rat.app import euronext, reuters, mongo, helpers
+from red_rat.app import euronext, reuters, mongo
+from red_rat.app.helpers import Helpers
 
 
 class Financials:
@@ -7,9 +8,9 @@ class Financials:
         self._mongo = mongo
         self._euronext = euronext
         self._reuters = reuters
-        self._helpers = helpers
+        self._helpers = Helpers()
 
-        self.isin, self.ric = helpers.transco_isin_ric(**kwargs)
+        self.isin, self.ric = Helpers().transco_isin_ric(**kwargs)
         self.mic = kwargs.get('mic')
 
         self._instrument_details = self._euronext.get_instrument_details(self.isin, self.mic)

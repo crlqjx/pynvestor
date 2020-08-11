@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy import optimize
 from red_rat.app.risk import PortfolioRiskManager
-from red_rat.app import helpers
+from red_rat.app.helpers import Helpers
 
 
 class Optimizer(PortfolioRiskManager):
@@ -18,7 +18,7 @@ class Optimizer(PortfolioRiskManager):
             weights = np.array(list(self.stocks_weights.values()))
             initial_weights = np.array(len(weights) * [(1 - self.cash_weight) / len(weights)])
 
-            def fun(w, r): return helpers.compute_portfolio_variance(w, r)[0]
+            def fun(w, r): return Helpers.compute_portfolio_variance(w, r)[0]
 
             constraint = ({'type': 'eq', 'fun': lambda w: np.sum(w) + self.cash_weight - 1})
             bounds = tuple((0.0, 1.0) for _ in range(len(weights)))
@@ -38,7 +38,7 @@ class Optimizer(PortfolioRiskManager):
                 weights /= weights.sum()
                 weights *= (1 - self.cash_weight)
 
-                ptf_variance = helpers.compute_portfolio_variance(weights, returns)[0]
+                ptf_variance = Helpers.compute_portfolio_variance(weights, returns)[0]
                 simulated_results[0, i] = ptf_variance
                 simulated_results[1, i] = np.dot(weights, mean_returns)
                 for j in range(len(weights)):
