@@ -1,28 +1,28 @@
 [
   {
-    "asset_type": "cash",
+    "asset_type": "CASH",
     "quantity": 233.10
   },
   {
-    "asset_type": "equity",
+    "asset_type": "EQUITY",
     "isin": "FR0000036675",
     "mic": "XPAR",
     "quantity": 10
   },
   {
-    "asset_type": "equity",
+    "asset_type": "EQUITY",
     "isin": "FR0013252186",
     "mic": "XPAR",
     "quantity": 46
   },
   {
-    "asset_type": "equity",
+    "asset_type": "EQUITY",
     "isin": "FR0013283108",
     "mic": "XPAR",
     "quantity": 22
   },
   {
-    "asset_type": "equity",
+    "asset_type": "EQUITY",
     "isin": "FR0013176526",
     "mic": "XPAR",
     "quantity": 15
