@@ -28,9 +28,9 @@ class PortfolioRiskManager(Portfolio):
         """
         returns = []
         for isin, _ in self.stocks_weights.items():
-            returns.append(Helpers.get_returns(isin=isin,
-                                               sort=[("time", -1)],
-                                               window=self._lookback_days).values)
+            returns.append(self._helpers.get_returns(isin=isin,
+                                                     sort=[("time", -1)],
+                                                     window=self._lookback_days).values)
 
         returns = np.stack(returns)
         self._histo_returns = returns
