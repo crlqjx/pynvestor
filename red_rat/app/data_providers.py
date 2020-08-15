@@ -73,6 +73,10 @@ class EuronextClient(MarketDataProvider):
         resp.raise_for_status()
         return resp.json()
 
+    def get_last_price(self, isin, mic):
+        instr_details = self.get_instrument_details(isin, mic)
+        return float(instr_details['instr']['currInstrSess']['lastPx'])
+
     @logger
     def get_quotes(self, isin, mic, period):
         assert period in ['max', 'intraday'], f'period {period} is not available'
