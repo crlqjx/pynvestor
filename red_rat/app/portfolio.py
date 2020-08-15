@@ -1,6 +1,4 @@
-import json
 import datetime as dt
-from pathlib import Path
 from red_rat.app import euronext, mongo
 from red_rat.app.helpers import Helpers
 from red_rat.models.position import Position
@@ -9,14 +7,8 @@ from pandas import DataFrame, Series
 
 
 class Portfolio:
-    def __init__(self, portfolio_path=None):
-        """
-        Class to load portfolio positions and market data
-        :param portfolio_path: path to the portfolio file in json
-        """
-        if portfolio_path is None:
-            portfolio_path = Path(__file__).parent.parent.joinpath('portfolio.json')
-        self._portfolio_path = portfolio_path
+    def __init__(self, portfolio_date: dt.datetime = None):
+        self._portfolio_date = portfolio_date
         self._euronext = euronext
         self._mongo = mongo
         self._helpers = Helpers()
@@ -27,9 +19,7 @@ class Portfolio:
         method to load and store the portfolio positions
         :return:
         """
-        with open(self._portfolio_path, 'r') as ptf:
-            position_json = json.load(ptf)
-        self._stocks_positions = [Position(**pos) for pos in position_json]
+        self._stocks_positions = self._get_portfolio_positions_as_of(at_date=self._portfolio_date)
 
         quantities = {}
         for position in self._stocks_positions:
@@ -62,7 +52,10 @@ class Portfolio:
                 instrument_details[isin] = euronext_data
 
                 # Get prices
-                price = float(euronext_data['currInstrSess']['lastPx'])
+                if self._portfolio_date is None:
+                    price = float(euronext_data['currInstrSess']['lastPx'])
+                else:
+                    price = self._helpers.get_price_from_mongo(isin, self._portfolio_date)
                 prices[isin] = price
 
                 # Get names
@@ -83,12 +76,15 @@ class Portfolio:
         self._stocks_perf_since_last_close = perf_since_last_close
         return True
 
-    def _get_cash_balance_as_of(self, at_date: dt.datetime):
+    def _get_cash_balance_as_of(self, at_date: dt.datetime = None):
         """
         method to get the cash balance from transactions
         :param at_date: datetime
         :return: float
         """
+
+        if at_date is None:
+            at_date = dt.datetime.today()
 
         transactions = self._mongo.find_documents(database_name='transactions',
                                                   collection_name='transactions',
@@ -98,7 +94,9 @@ class Portfolio:
         cash_balance = Series(transactions).sum()
         return Position(**{'asset_type': 'CASH', 'quantity': cash_balance})
 
-    def _get_equity_positions_as_of(self, at_date: dt.datetime):
+    def _get_equity_positions_as_of(self, at_date: dt.datetime = None):
+        if at_date is None:
+            at_date = dt.datetime.today()
 
         transactions_quantities = self._mongo.find_documents(database_name='transactions',
                                                              collection_name='transactions',
@@ -106,14 +104,18 @@ class Portfolio:
                                                              **{'transaction_date': {'$lte': at_date},
                                                                 'isin': {'$ne': None}})
         transactions_quantities = [transactions for transactions in transactions_quantities]
-        df = DataFrame(transactions_quantities).groupby('isin').sum()
-        positions = df[df['quantity'] != 0.0]
-        positions['asset_type'] = 'EQUITY'
-        positions.reset_index(inplace=True)
+        if transactions_quantities:
+            df = DataFrame(transactions_quantities).groupby(['isin', 'mic']).sum()
+            positions = df[df['quantity'] != 0.0]
+            positions['asset_type'] = 'EQUITY'
+            positions.reset_index(inplace=True)
+            result = [Position(**pos) for pos in positions.to_dict('records')]
+        else:
+            result = []
 
-        return [Position(**pos) for pos in positions.to_dict('records')]
+        return result
 
-    def _get_portfolio_positions_as_of(self, at_date: dt.datetime):
+    def _get_portfolio_positions_as_of(self, at_date: dt.datetime = None):
         return self._get_equity_positions_as_of(at_date) + [self._get_cash_balance_as_of(at_date)]
 
     def _get_weights(self):
