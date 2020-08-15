@@ -1,5 +1,5 @@
 import datetime as dt
-from red_rat import euronext
+from red_rat.app import euronext
 from dataclasses import dataclass
 from marshmallow import Schema, fields
 from marshmallow_enum import EnumField
