@@ -44,6 +44,19 @@ class EuronextClient(MarketDataProvider):
 
         return all_stocks
 
+    def _all_indices(self):
+        file_path = os.path.join(current_directory, "static", "Euronext_Indices_2020-09-08.json")
+        with open(file_path, 'r') as f:
+            data = json.load(f)
+            indices_data = data['aaData']
+
+        all_indices = [{'isin': indice[1],
+                        'symbol': indice[2],
+                        'mic': re.search(f'/{indice[1]}-' + '([A-Z]{4})/', indice[0]).group(1)}
+                       for indice in indices_data]
+
+        return all_indices
+
     @logger
     def search_in_euronext(self, query):
         url = f"https://live.euronext.com/fr/instrumentSearch/searchJSON?q={query}"
@@ -104,6 +117,17 @@ class EuronextClient(MarketDataProvider):
         stock_list = resp.json()
         with open(filename, 'w') as f:
             json.dump(stock_list, f)
+
+        return resp.json()
+
+    def update_indices_list(self):
+        today = date.today().isoformat()
+        filename = os.path.join(current_directory, "static", f"Euronext_Indices_{today}.json")
+        url = 'https://live.euronext.com/pd/data/index?mics=XAMS%2CXBRU%2CXLIS%2CXPAR%2CXLDN%2CXDUB&display_datapoints=dp_index&display_filters=df_index'
+        resp = self._session.post(url)
+        indices_list = resp.json()
+        with open(filename, 'w') as f:
+            json.dump(indices_list, f)
 
         return resp.json()
 
