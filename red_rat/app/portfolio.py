@@ -165,9 +165,21 @@ class Portfolio:
 
         return nav
 
-    @staticmethod
-    def save_portfolio_nav(self, nav, nav_date, cashflows=0.0, shares=None):
-        pass
+    def save_portfolio_nav(self, shares, cashflows=0.0):
+        if self._portfolio_date is None:
+            today = dt.date.today()
+            nav_date = dt.datetime(today.year, today.month, today.day)
+        else:
+            nav_date = self._portfolio_date
+
+        assets = self._portfolio_market_value
+        data = {"date": nav_date,
+                "assets": assets,
+                "cashflows": cashflows,
+                "shares": shares}
+
+        mongo.insert_documents('net_asset_values', 'net_asset_values', [data])
+        return True
 
     def to_df(self):
         """
@@ -233,7 +245,7 @@ class Portfolio:
 
     @property
     def portfolio_market_value(self):
-        return self._portfolio_market_value
+        return round(self._portfolio_market_value, 5)
 
     @property
     def stocks_names(self):
