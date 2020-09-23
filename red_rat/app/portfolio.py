@@ -12,7 +12,9 @@ class Portfolio:
         self._euronext = euronext
         self._mongo = mongo
         self._helpers = Helpers()
-        self._get_portfolio()
+        self._load_portfolio_positions()
+        self._get_euronext_data()
+        self._compute()
 
     def _load_portfolio_positions(self):
         """
@@ -181,13 +183,11 @@ class Portfolio:
 
         return df
 
-    def _get_portfolio(self):
+    def _compute(self):
         """
         method to launch to get all the portfolio data
         :return:
         """
-        self._load_portfolio_positions()
-        self._get_euronext_data()
 
         market_values = {}
         self._portfolio_market_value = self._cash
@@ -217,7 +217,7 @@ class Portfolio:
 
     @property
     def get_portfolio(self):
-        return self._get_portfolio()
+        return self._compute()
 
     @property
     def stocks_weights(self):
