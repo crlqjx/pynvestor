@@ -11,13 +11,24 @@ from red_rat.app import mongo, euronext, reuters
 
 
 @logger
-def update_quotes():
+def update_stocks_quotes():
     filtered_stocks = (stock for stock in euronext.all_stocks if stock['mic'] in ['XPAR', 'ALXP'])
     for stock in filtered_stocks:
         logger.log.info(f'updating {stock}')
         quotes = euronext.get_quotes(stock['isin'], stock['mic'], 'max')
         if quotes:
             mongo.insert_documents('quotes', 'equities', quotes)
+    return
+
+
+@logger
+def update_indices_quotes():
+    filtered_indices = (indice for indice in euronext.all_stocks if indice['mic'] in ['XPAR', 'ALXP'])
+    for indice in filtered_indices:
+        logger.log.info(f'updating {indice}')
+        quotes = euronext.get_quotes(indice['isin'], indice['mic'], 'max')
+        if quotes:
+            mongo.insert_documents('quotes', 'indices', quotes)
     return
 
 
@@ -99,6 +110,7 @@ def get_cash_flow_statement_elements(ric, period, date=None):
 
 
 if __name__ == '__main__':
-    update_quotes()
+    update_stocks_quotes()
+    update_indices_quotes()
     update_fundamentals()
     pass
