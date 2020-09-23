@@ -124,7 +124,7 @@ class EuronextClient(MarketDataProvider):
         today = date.today().isoformat()
         filename = os.path.join(current_directory, "static", f"Euronext_Indices_{today}.json")
         url = 'https://live.euronext.com/pd/data/index?mics=XAMS%2CXBRU%2CXLIS%2CXPAR%2CXLDN%2CXDUB&display_datapoints=dp_index&display_filters=df_index'
-        resp = self._session.post(url)
+        resp = self._session.post(url, data={'iDisplayLength': 500})
         indices_list = resp.json()
         with open(filename, 'w') as f:
             json.dump(indices_list, f)
