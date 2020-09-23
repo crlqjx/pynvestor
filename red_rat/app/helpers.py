@@ -26,7 +26,7 @@ class Helpers:
         try:
             quotes_series = pd.DataFrame(quotes).set_index('time')['price']
         except KeyError as key_error:
-            raise KeyError(f'could not find quotes for {isin} - {key_error}')
+            raise KeyError(f'could not find quotes for {isin} between {start_date} and {end_date}- {key_error}')
         quotes_series.index = quotes_series.index.normalize()
         return quotes_series
 
