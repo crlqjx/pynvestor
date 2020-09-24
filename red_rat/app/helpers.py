@@ -79,3 +79,25 @@ class Helpers:
             isin = rics_to_isins[ric]
 
         return isin, ric
+
+    @staticmethod
+    def compute_ytd_returns(time_series: pd.Series):
+        """
+        Compute year-to-date from a pandas time series
+        :param time_series: pandas time series
+        :return: pandas time series
+        """
+
+        ytd_returns = []
+
+        group_by_object = time_series.groupby(pd.Grouper(freq='A'))
+        for group_name, indexes in group_by_object.indices.items():
+            start_index = indexes[0] - 1 if indexes[0] > 0 else indexes[0]
+            for idx in indexes:
+                ytd_return = time_series[idx] / time_series[start_index] - 1.0
+                ytd_returns.append(ytd_return)
+
+        result = pd.Series(index=time_series.index, data=ytd_returns)
+        assert len(result) == len(time_series)
+
+        return result
