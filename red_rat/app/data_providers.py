@@ -1,4 +1,6 @@
 import requests
+import aiohttp
+import asyncio
 import json
 import os
 import re
@@ -152,3 +154,31 @@ class ReutersClient(MarketDataProvider):
         resp = self._session.get(f'{self._url}getFetchCompanyProfile/{ric}')
         resp.raise_for_status()
         return resp.json()
+
+    @logger
+    def get_companies_profile(self, rics):
+        async def fetch(ric):
+            url = rf"https://www.reuters.com/companies/api/getFetchCompanyProfile/{ric}"
+            print(f'getting {ric} info')
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as response:
+                    jso = response.json()
+                    response_status = response.status
+                    return response_status, ric, await jso
+
+        async def fetch_all(rics):
+            jsons = await asyncio.gather(*[fetch(ric) for ric in rics])
+            return jsons
+
+        company_profiles = asyncio.run(fetch_all(rics))
+
+        result = []
+        in_error = []
+
+        for profile in company_profiles:
+            if profile[0] >= 404:
+                in_error.append(profile)
+            else:
+                result.append(profile)
+
+        return result, in_error
