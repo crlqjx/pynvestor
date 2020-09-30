@@ -34,7 +34,8 @@ class EuronextClient(MarketDataProvider):
         super().__init__()
         self._base_url = "https://live.euronext.com"
 
-    def _all_stocks(self):
+    @staticmethod
+    def _all_stocks():
         file_path = os.path.join(current_directory, "static", "Euronext_Equities_2020-06-17.json")
         with open(file_path, 'r') as f:
             data = json.load(f)
@@ -47,7 +48,8 @@ class EuronextClient(MarketDataProvider):
 
         return all_stocks
 
-    def _all_indices(self):
+    @staticmethod
+    def _all_indices():
         file_path = os.path.join(current_directory, "static", "Euronext_Indices_2020-09-08.json")
         with open(file_path, 'r') as f:
             data = json.load(f)
@@ -154,10 +156,6 @@ class EuronextClient(MarketDataProvider):
         all_quotes = asyncio.run(fetch_all(isin_mic_period))
 
         return all_quotes
-
-    def get_historical_data(self, isin, market, start_date, end_date):
-        # TODO
-        url = 'https://live.euronext.com/fr/ajax/getHistoricalPricePopup/FR0000045072-XPAR'
 
     def update_stocks_list(self):
         today = date.today().isoformat()
