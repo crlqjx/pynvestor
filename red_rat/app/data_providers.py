@@ -233,14 +233,15 @@ class ReutersClient(MarketDataProvider):
                 final_result += temp_result
                 if stocks_to_request == [stocks_to_request[idx] for idx in missing_response]:
                     retry_counter += 1
-                if retry_counter >= 20:
+                if retry_counter >= 5:
                     logger.log.warning('Retried too many times for the same stocks, aborting')
                     break
 
                 stocks_to_request = [stocks_to_request[idx] for idx in missing_response]
 
                 if missing_response:
-                    logger.log.info(f'Retrying for {len(stocks_to_request)} stocks')
+                    logger.log.info(f'Retrying for {len(stocks_to_request)} stocks: {stocks_to_request}')
+                    await asyncio.sleep(5)
 
             return final_result
 
