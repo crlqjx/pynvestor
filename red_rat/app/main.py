@@ -12,24 +12,22 @@ from red_rat.app import mongo, euronext, reuters
 
 @logger
 def update_stocks_quotes():
-    filtered_stocks = (stock for stock in euronext.all_stocks if stock['mic'] in ['XPAR', 'ALXP'])
-    for stock in filtered_stocks:
-        logger.log.info(f'updating {stock}')
-        quotes = euronext.get_quotes(stock['isin'], stock['mic'], 'max')
-        if quotes:
-            mongo.insert_documents('quotes', 'equities', quotes)
-    return
+    filtered_stocks = [(stock['isin'], stock['mic'], 'max')
+                       for stock in euronext.all_stocks if stock['mic'] in ['XPAR', 'ALXP']]
+    all_quotes = euronext.get_quotes_multiple_stocks(filtered_stocks)
+    quotes = [quote for quotes in all_quotes for quote in quotes]  # List flatten
+    mongo.insert_documents('quotes', 'equities', quotes)
+    return True
 
 
 @logger
 def update_indices_quotes():
-    filtered_indices = (indice for indice in euronext.all_stocks if indice['mic'] in ['XPAR', 'ALXP'])
-    for indice in filtered_indices:
-        logger.log.info(f'updating {indice}')
-        quotes = euronext.get_quotes(indice['isin'], indice['mic'], 'max')
-        if quotes:
-            mongo.insert_documents('quotes', 'indices', quotes)
-    return
+    filtered_indices = [(stock_index['isin'], stock_index['mic'], 'max')
+                        for stock_index in euronext.all_indices if stock_index['mic'] in ['XPAR', 'ALXP']]
+    all_quotes = euronext.get_quotes_multiple_stocks(filtered_indices)
+    quotes = [quote for quotes in all_quotes for quote in quotes]  # List flatten
+    mongo.insert_documents('quotes', 'equities', quotes)
+    return True
 
 
 @logger
@@ -77,6 +75,8 @@ def update_fundamentals():
         mongo.insert_documents(database_name='financials',
                                collection_name=statement,
                                documents=data_to_insert[statement])
+
+    return True
 
 
 def get_balance_sheet_elements(ric, period, date=None):
