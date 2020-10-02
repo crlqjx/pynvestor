@@ -186,6 +186,10 @@ class EuronextClient(MarketDataProvider):
     def all_stocks(self):
         return self._all_stocks()
 
+    @property
+    def all_indices(self):
+        return self._all_indices()
+
 
 class ReutersClient(MarketDataProvider):
     def __init__(self):
