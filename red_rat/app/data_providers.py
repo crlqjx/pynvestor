@@ -33,6 +33,7 @@ class EuronextClient(MarketDataProvider):
     def __init__(self):
         super().__init__()
         self._base_url = "https://live.euronext.com"
+        self.isin_to_mic = {stock['isin']: stock['mic'] for stock in self._all_stocks()}
 
     @staticmethod
     def _all_stocks():
@@ -72,10 +73,7 @@ class EuronextClient(MarketDataProvider):
         return result
 
     def get_mic_from_isin(self, isin):
-        stock_data = self.search_in_euronext(isin)
-        assert len(stock_data) > 0, ValueError(f'No result found for {isin}')
-        assert len(stock_data) == 1, f'Many results found for {isin}'
-        return stock_data[0]['mic']
+        return self.isin_to_mic[isin]
 
     @logger
     def get_instrument_details(self, isin, mic=None):
@@ -90,6 +88,37 @@ class EuronextClient(MarketDataProvider):
         resp = self._session.get(url, data={'theme_name': 'euronext_live'})
         resp.raise_for_status()
         return resp.json()
+
+    def get_instruments_details(self, isins_mics):
+        async def fetch(isin, mic):
+            if mic in ['ALXP', 'XMLI']:
+                exch_code = 'XPAR'
+            elif mic in ['VPXB', 'MLXB', 'ALXB']:
+                exch_code = 'XBRU'
+            elif mic in ['XESM', 'XMSM']:
+                exch_code = 'XDUB'
+            elif mic in ['ALXL']:
+                exch_code = 'XLIS'
+            else:
+                exch_code = mic
+            url = f"https://gateway.euronext.com/api/instrumentDetail?code={isin}&codification=" \
+                  f"ISIN&exchCode={exch_code}&sessionQuality=RT&view=FULL&authKey={config['euronextapikey']}"
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url, data={'theme_name': 'euronext_live'}) as response:
+                        response_json = response.json()
+                        instr_details = await response_json
+                        return {isin: instr_details.get('instr')}
+            except aiohttp.ContentTypeError as content_type_error:
+                logger.log.warning(f'{isin} {exch_code} - {content_type_error}')
+                return {isin: None}
+
+        async def fetch_all(stocks_to_request):
+            all_result = await asyncio.gather(*[fetch(isin, mic) for isin, mic in stocks_to_request])
+            return all_result
+
+        result = asyncio.run(fetch_all(isins_mics))
+        return result
 
     def get_last_price(self, isin, mic):
         instr_details = self.get_instrument_details(isin, mic)
