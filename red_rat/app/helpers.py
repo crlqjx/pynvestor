@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import itertools
 import json
+from red_rat import logger
 from red_rat.app import mongo
 
 
@@ -31,9 +32,14 @@ class Helpers:
         return quotes_series
 
     def get_price_from_mongo(self, isin, price_date):
-        price = self.get_prices_from_mongo(isin, price_date, price_date + dt.timedelta(days=1))
-        assert len(price) == 1, f'more than one last price founded for {price_date}'
-        return price[0]
+        try:
+            price = self.get_prices_from_mongo(isin, price_date, price_date + dt.timedelta(days=1))
+            assert len(price) == 1, f'more than one last price founded for {price_date}'
+            result = price[0]
+        except KeyError:
+            logger.log.warning(f'Could not find price for {isin} on {price_date}')
+            result = None
+        return result
 
     def get_returns(self, isin: str,
                     start_date: dt.datetime = dt.datetime(2000, 1, 1),
