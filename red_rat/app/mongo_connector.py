@@ -42,7 +42,7 @@ class MongoConnector:
             documents = collection.find(fields, projection)
         else:
             documents = collection.find(fields, projection).sort(sort)
-        return (document for document in documents)
+        return documents
 
     def insert_documents(self, database_name: str, collection_name: str, documents: list):
         collection = getattr(getattr(self._mongo_client, database_name), collection_name)
@@ -61,3 +61,8 @@ class MongoConnector:
             logger.log.warning(f"bulk insert in {database_name}.{collection_name} with already existing key: inserted "
                                f"{bulk_write_error.details['nInserted']} documents, encountered "
                                f"{len(bulk_write_error.details['writeErrors'])} write errors")
+
+    def aggregate_documents(self, database_name: str, collection_name: str, pipeline):
+        collection = getattr(getattr(self._mongo_client, database_name), collection_name)
+        result = collection.aggregate(pipeline)
+        return result
