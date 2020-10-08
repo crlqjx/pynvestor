@@ -9,8 +9,6 @@ from pandas import DataFrame, Series
 class Portfolio:
     def __init__(self, portfolio_date: dt.datetime = None):
         self._portfolio_date = portfolio_date
-        self._euronext = euronext
-        self._mongo = mongo
         self._helpers = Helpers()
         self._load_portfolio_positions()
         self._get_euronext_data()
@@ -48,7 +46,7 @@ class Portfolio:
             if position.asset_type is not AssetType.CASH:
                 isin = position.isin
                 mic = position.mic
-                euronext_data = self._euronext.get_instrument_details(isin, mic)['instr']
+                euronext_data = euronext.get_instrument_details(isin, mic)['instr']
 
                 # Get instrument details
                 instrument_details[isin] = euronext_data
@@ -88,10 +86,10 @@ class Portfolio:
         if at_date is None:
             at_date = dt.datetime.today()
 
-        transactions = self._mongo.find_documents(database_name='transactions',
-                                                  collection_name='transactions',
-                                                  projection={'_id': 0, 'net_cashflow': 1},
-                                                  **{'transaction_date': {'$lte': at_date}})
+        transactions = mongo.find_documents(database_name='transactions',
+                                            collection_name='transactions',
+                                            projection={'_id': 0, 'net_cashflow': 1},
+                                            **{'transaction_date': {'$lte': at_date}})
         transactions = [list(transaction.values())[0] for transaction in transactions]
         cash_balance = Series(transactions).sum()
         return Position(**{'asset_type': 'CASH', 'quantity': cash_balance})
@@ -100,11 +98,11 @@ class Portfolio:
         if at_date is None:
             at_date = dt.datetime.today()
 
-        transactions_quantities = self._mongo.find_documents(database_name='transactions',
-                                                             collection_name='transactions',
-                                                             projection={'_id': 0, 'isin': 1, 'quantity': 1, 'mic': 1},
-                                                             **{'transaction_date': {'$lte': at_date},
-                                                                'isin': {'$ne': None}})
+        transactions_quantities = mongo.find_documents(database_name='transactions',
+                                                       collection_name='transactions',
+                                                       projection={'_id': 0, 'isin': 1, 'quantity': 1, 'mic': 1},
+                                                       **{'transaction_date': {'$lte': at_date},
+                                                          'isin': {'$ne': None}})
         transactions_quantities = [transactions for transactions in transactions_quantities]
         if transactions_quantities:
             df = DataFrame(transactions_quantities).groupby(['isin', 'mic']).sum()
@@ -138,8 +136,8 @@ class Portfolio:
         method to compute the portfolio net asset values
         :return:
         """
-        asset_values = self._mongo.find_documents(database_name='net_asset_values', collection_name='net_asset_values',
-                                                  projection={'_id': 0})
+        asset_values = mongo.find_documents(database_name='net_asset_values', collection_name='net_asset_values',
+                                            projection={'_id': 0})
 
         df_assets = DataFrame(asset_values).set_index('date')
         df_assets['navs'] = df_assets['assets'] / df_assets['shares']
