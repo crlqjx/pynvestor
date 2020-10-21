@@ -37,7 +37,7 @@ class EuronextClient(MarketDataProvider):
 
     @staticmethod
     def _all_stocks():
-        file_path = os.path.join(current_directory, "static", "Euronext_Equities_2020-06-17.json")
+        file_path = os.path.join(current_directory, "static", "Euronext_Equities_2020-10-08.json")
         with open(file_path, 'r') as f:
             data = json.load(f)
             stocks_data = data['aaData']
@@ -73,7 +73,7 @@ class EuronextClient(MarketDataProvider):
         return result
 
     def get_mic_from_isin(self, isin):
-        return self.isin_to_mic[isin]
+        return self.isin_to_mic.get(isin)
 
     @logger
     def get_instrument_details(self, isin, mic=None):
