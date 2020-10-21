@@ -76,7 +76,8 @@ class Portfolio:
         self._stocks_perf_since_last_close = perf_since_last_close
         return True
 
-    def _get_cash_balance_as_of(self, at_date: dt.datetime = None):
+    @staticmethod
+    def _get_cash_balance_as_of(at_date: dt.datetime = None):
         """
         method to get the cash balance from transactions
         :param at_date: datetime
@@ -94,7 +95,8 @@ class Portfolio:
         cash_balance = Series(transactions).sum()
         return Position(**{'asset_type': 'CASH', 'quantity': cash_balance})
 
-    def _get_equity_positions_as_of(self, at_date: dt.datetime = None):
+    @staticmethod
+    def _get_equity_positions_as_of(at_date: dt.datetime = None):
         if at_date is None:
             at_date = dt.datetime.today()
 
