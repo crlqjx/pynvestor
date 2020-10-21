@@ -10,6 +10,12 @@ from red_rat.app import mongo
 class Helpers:
     def __init__(self):
         self._mongo = mongo
+        self._init()
+
+    def _init(self):
+        with open(r"D:\Python Projects\red_rat\red_rat\static\rics.json", 'r') as f:
+            self._isins_to_rics = json.load(f)
+            self._rics_to_isins = {value: key for key, value in self._isins_to_rics.items()}
 
     def get_prices_from_mongo(self, isin: str,
                               start_date: dt.datetime = dt.datetime(2000, 1, 1),
@@ -66,23 +72,18 @@ class Helpers:
         portfolio_variance = np.dot(weights.T, np.dot(cov_matrix, weights))
         return portfolio_variance, cov_matrix
 
-    @staticmethod
-    def transco_isin_ric(**isin_or_ric):
+    def transco_isin_ric(self, **isin_or_ric):
         isin = isin_or_ric.get('isin')
         ric = isin_or_ric.get('ric')
-
-        with open(r"D:\Python Projects\red_rat\red_rat\static\rics.json", 'r') as f:
-            isins_to_rics = json.load(f)
-            rics_to_isins = {value: key for key, value in isins_to_rics.items()}
 
         if (isin is None and ric is None) or (isin is not None and ric is not None):
             raise ValueError('Enter either isin or ric')
 
         if isin is not None and ric is None:
-            ric = isins_to_rics[isin]
+            ric = self._isins_to_rics.get(isin)
 
         if ric is not None and isin is None:
-            isin = rics_to_isins[ric]
+            isin = self._rics_to_isins.get(ric)
 
         return isin, ric
 
