@@ -22,26 +22,32 @@ class MongoConnector:
         # TODO: check all the index keys
         return
 
-    def find_document(self, database_name: str, collection_name: str, **fields):
+    def find_document(self, database_name: str, collection_name: str, sort=None, **fields):
+        """
+        Find first document in mongo from query
+        :param database_name: str
+        :param collection_name: str
+        :param sort: list of tuples - sort parameters - [("field1", -1), ("field2", 1)]
+        :param fields: dict - filters for the query - {"field1" : "required_value"}
+        :return: dictionary
+        """
         collection = getattr(getattr(self._mongo_client, database_name), collection_name)
-        return collection.find_one(fields)
+        return collection.find_one(fields, sort=sort)
 
     def find_documents(self, database_name: str, collection_name: str, projection=None,
-                       sort=None, **fields) -> Generator:
+                       sort=None, limit=0, **fields) -> Generator:
         """
         find documents in mongo from query
         :param database_name: str
         :param collection_name: str
         :param projection: dict - fields required in the result - {"field1": 0, "field2": 1}
         :param sort: list of tuples - sort parameters - [("field1", -1), ("field2", 1)]
+        :param limit: integer - set limit size of results
         :param fields: dict - filters for the query - {"field1" : "required_value"}
         :return: generator object of the results
         """
         collection = getattr(getattr(self._mongo_client, database_name), collection_name)
-        if sort is None:
-            documents = collection.find(fields, projection)
-        else:
-            documents = collection.find(fields, projection).sort(sort)
+        documents = collection.find(fields, projection, sort=sort, limit=limit)
         return documents
 
     def insert_documents(self, database_name: str, collection_name: str, documents: list):
