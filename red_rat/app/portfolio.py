@@ -154,18 +154,9 @@ class Portfolio:
         self._nav_weekly_returns = self._portfolio_navs.pct_change()
         return True
 
-    def compute_portfolio_nav(self, nav_date: dt.datetime):
-        stocks_valuation = {}
-        for isin, quantity in self._stocks_quantities.items():
-            price = self._helpers.get_price_from_mongo(isin, nav_date)
-            valuation = price * quantity
-            stocks_valuation[isin] = valuation
-
-        nav = Series(list(stocks_valuation.values())).sum() + self._cash
-
-        return nav
-
-    def save_portfolio_nav(self, shares, cashflows=0.0):
+    def save_portfolio_nav(self, shares=None, cashflows=0.0):
+        if shares is None:
+            shares = mongo.find_document('net_asset_values', 'net_asset_values', [("date", -1)])['shares']
         if self._portfolio_date is None:
             today = dt.date.today()
             nav_date = dt.datetime(today.year, today.month, today.day)
@@ -214,6 +205,10 @@ class Portfolio:
         self._compute_portfolio_navs()
         self._compute_portfolio_returns()
         return True
+
+    @property
+    def portfolio_date(self):
+        return self._portfolio_date
 
     @property
     def stocks_quantities(self):
