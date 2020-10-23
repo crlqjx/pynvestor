@@ -43,7 +43,7 @@ class Helpers:
             assert len(price) == 1, f'more than one last price founded for {price_date}'
             result = price[0]
         except KeyError:
-            logger.log.warning(f'Could not find price for {isin} on {price_date}')
+            logger.log.warning(f'Could not find price in mongo for {isin} on {price_date}')
             result = None
         return result
 
