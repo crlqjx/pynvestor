@@ -4,16 +4,14 @@ from red_rat.app.helpers import Helpers
 
 
 class Financials:
-    def __init__(self, **kwargs):
-        self._mongo = mongo
-        self._euronext = euronext
+    def __init__(self, **isin_or_ric):
         self._reuters = reuters
         self._helpers = Helpers()
 
-        self.isin, self.ric = Helpers().transco_isin_ric(**kwargs)
-        self.mic = kwargs.get('mic')
+        self.isin, self.ric = Helpers().transco_isin_ric(**isin_or_ric)
+        self.mic = isin_or_ric.get('mic')
 
-        self._instrument_details = self._euronext.get_instrument_details(self.isin, self.mic)
+        self._instrument_details = euronext.get_instrument_details(self.isin, self.mic)
 
     def eps(self, annual_period: bool = False, eps_date: dt.datetime = None):
         period = 'annual' if annual_period else 'interim'
@@ -21,10 +19,10 @@ class Financials:
             query = {'ric': self.ric, 'report_elem': 'Net Income', 'period': period, 'date': eps_date}
         else:
             query = {'ric': self.ric, 'report_elem': 'Net Income', 'period': period}
-        net_income = self._mongo.find_documents(database_name='financials',
-                                                collection_name='income',
-                                                sort=[('date', -1)],
-                                                **query)
+        net_income = mongo.find_documents(database_name='financials',
+                                          collection_name='income',
+                                          sort=[('date', -1)],
+                                          **query)
         net_income = net_income.__next__()['value'] * 1e6
 
         outs_shares = int(self._instrument_details['instr']['nbShare'])
