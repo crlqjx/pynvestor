@@ -4,12 +4,14 @@ import asyncio
 import json
 import os
 import re
+import pytz
 import datetime as dt
 
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from datetime import date
 from red_rat import logger
+from red_rat.app.helpers import Helpers
 from typing import List, Tuple
 
 current_directory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -89,7 +91,8 @@ class EuronextClient(MarketDataProvider):
         resp.raise_for_status()
         return resp.json()
 
-    def get_instruments_details(self, isins_mics):
+    @staticmethod
+    def get_instruments_details(isins_mics):
         async def fetch(isin, mic):
             if mic in ['ALXP', 'XMLI']:
                 exch_code = 'XPAR'
@@ -147,6 +150,7 @@ class EuronextClient(MarketDataProvider):
         [('FR123456789', 'XPAR', 'max'), ('FR987654321', 'XPAR', 'intraday')]
         :return:
         """
+
         async def fetch(isin, mic, period):
             url = f"{self._base_url}/intraday_chart/getChartData/{isin}-{mic}/{period}"
             try:
@@ -223,7 +227,7 @@ class EuronextClient(MarketDataProvider):
 class ReutersClient(MarketDataProvider):
     def __init__(self):
         super().__init__()
-        self._url = rf"https://www.reuters.com/companies/api/"
+        self._url = r"https://www.reuters.com/companies/api/"
 
     @logger
     def get_financial_data(self, ric):
@@ -281,3 +285,42 @@ class ReutersClient(MarketDataProvider):
         company_profiles = asyncio.run(fetch_all(rics))
 
         return company_profiles
+
+
+class YahooClient(MarketDataProvider):
+    def __init__(self):
+        super().__init__()
+        self._url = r'https://query1.finance.yahoo.com/v1/'
+
+    def get_symbol_from_isin(self, isin):
+        url = f'{self._url}finance/search?q=FR0013176526'
+        params = {'q': isin,
+                  'quotesCount': 1,
+                  'newsCount': 0}
+        resp = self._session.get(url, params=params)
+        return resp.json()
+
+    @logger
+    def get_quote(self, **kwargs):
+        isin = kwargs.get('isin')
+        ric = kwargs.get('ric')
+        if isin is None and ric is not None:
+            isin = Helpers().transco_isin_ric(ric=ric)[0]
+        symbol = kwargs.get('symbol')
+        if symbol is None:
+            symbol = self.get_symbol_from_isin(isin)['quotes'][0]['symbol']
+        url = rf'https://query2.finance.yahoo.com/v8/finance/chart/{symbol}'
+
+        start_date = dt.datetime(2000, 1, 3, tzinfo=pytz.UTC)
+        today = dt.datetime.today()
+        end_date = dt.datetime(today.year, today.month, today.day, tzinfo=pytz.UTC)
+        params = {'formatted': True,
+                  'region': 'FR',
+                  'includeAdjustedClose': True,
+                  'interval': '1d',
+                  'period1': int(dt.datetime.timestamp(start_date)),
+                  'period2': int(dt.datetime.timestamp(end_date)),
+                  'events': 'div|split',
+                  'corsDomain': 'fr.finance.yahoo.com'}
+        resp = self._session.get(url, params=params)
+        return resp.json()
