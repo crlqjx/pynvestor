@@ -11,7 +11,6 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from datetime import date
 from red_rat import logger
-from red_rat.app.helpers import Helpers
 from typing import List, Tuple
 
 current_directory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -301,14 +300,7 @@ class YahooClient(MarketDataProvider):
         return resp.json()
 
     @logger
-    def get_quote(self, **kwargs):
-        isin = kwargs.get('isin')
-        ric = kwargs.get('ric')
-        if isin is None and ric is not None:
-            isin = Helpers().transco_isin_ric(ric=ric)[0]
-        symbol = kwargs.get('symbol')
-        if symbol is None:
-            symbol = self.get_symbol_from_isin(isin)['quotes'][0]['symbol']
+    def get_quotes(self, symbol):
         url = rf'https://query2.finance.yahoo.com/v8/finance/chart/{symbol}'
 
         start_date = dt.datetime(2000, 1, 3, tzinfo=pytz.UTC)
