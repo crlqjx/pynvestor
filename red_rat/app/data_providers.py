@@ -291,13 +291,13 @@ class YahooClient(MarketDataProvider):
         super().__init__()
         self._url = r'https://query1.finance.yahoo.com/v1/'
 
-    def get_symbol_from_isin(self, isin):
+    def get_info_from_isin(self, isin):
         url = f'{self._url}finance/search?q=FR0013176526'
         params = {'q': isin,
                   'quotesCount': 1,
                   'newsCount': 0}
         resp = self._session.get(url, params=params)
-        return resp.json()
+        return resp.json()['quotes'][0]
 
     @logger
     def get_quotes(self, symbol):
