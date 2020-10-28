@@ -292,7 +292,7 @@ class YahooClient(MarketDataProvider):
         self._url = r'https://query1.finance.yahoo.com/v1/'
 
     def get_info_from_isin(self, isin):
-        url = f'{self._url}finance/search?q=FR0013176526'
+        url = f'{self._url}finance/search'
         params = {'q': isin,
                   'quotesCount': 1,
                   'newsCount': 0}
