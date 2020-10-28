@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 import itertools
 import json
-from red_rat import logger
-from red_rat.app import mongo
+from pynvestor import logger
+from pynvestor.app import mongo
 
 
 class Helpers:

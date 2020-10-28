@@ -10,7 +10,7 @@ import datetime as dt
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from datetime import date
-from red_rat import logger
+from pynvestor import logger
 from typing import List, Tuple
 
 current_directory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

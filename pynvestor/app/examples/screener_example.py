@@ -1,5 +1,5 @@
 import datetime as dt
-from red_rat.app.screener import Screener
+from pynvestor.app.screener import Screener
 
 today = dt.date.today()
 

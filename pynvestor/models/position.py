@@ -1,4 +1,4 @@
-from red_rat.models.asset_type import AssetType
+from pynvestor.models.asset_type import AssetType
 from marshmallow import Schema, fields
 from marshmallow_enum import EnumField
 

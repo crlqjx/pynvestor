@@ -2,8 +2,8 @@ import datetime as dt
 import json
 
 from requests.exceptions import HTTPError
-from red_rat import logger
-from red_rat.app import mongo, euronext, reuters
+from pynvestor import logger
+from pynvestor.app import mongo, euronext, reuters
 
 
 @logger

@@ -1,7 +1,7 @@
 import pandas as pd
 import datetime as dt
-from red_rat.app import mongo
-from red_rat.app.portfolio import Portfolio
+from pynvestor.app import mongo
+from pynvestor.app.portfolio import Portfolio
 
 navs = list(mongo.find_documents('net_asset_values', 'net_asset_values', {'_id': 0}, sort=[("date", -1)]))
 

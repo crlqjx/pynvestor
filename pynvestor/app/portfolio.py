@@ -1,8 +1,8 @@
 import datetime as dt
-from red_rat.app import euronext, mongo
-from red_rat.app.helpers import Helpers
-from red_rat.models.position import Position
-from red_rat.models.asset_type import AssetType
+from pynvestor.app import euronext, mongo
+from pynvestor.app.helpers import Helpers
+from pynvestor.models.position import Position
+from pynvestor.models.asset_type import AssetType
 from pandas import DataFrame, Series
 
 

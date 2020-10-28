@@ -1,6 +1,6 @@
 import datetime as dt
-from red_rat.app import euronext, reuters, mongo
-from red_rat.app.helpers import Helpers
+from pynvestor.app import euronext, reuters, mongo
+from pynvestor.app.helpers import Helpers
 
 
 class Financials:

@@ -1,4 +1,4 @@
-from red_rat import logger
+from pynvestor import logger
 
 from pymongo import MongoClient
 from pymongo.errors import BulkWriteError

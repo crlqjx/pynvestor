@@ -1,9 +1,9 @@
 import pandas as pd
 
-from red_rat.app import euronext, mongo
-from red_rat.app.data_providers import ReutersClient
-from red_rat.app.helpers import Helpers
-from red_rat import logger
+from pynvestor.app import euronext, mongo
+from pynvestor.app.data_providers import ReutersClient
+from pynvestor.app.helpers import Helpers
+from pynvestor import logger
 
 reuters = ReutersClient()
 helpers = Helpers()
