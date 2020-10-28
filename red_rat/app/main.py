@@ -6,10 +6,6 @@ from red_rat import logger
 from red_rat.app import mongo, euronext, reuters
 
 
-# TODO: compute financial ratios
-# TODO: TOR https://www.sylvaindurand.fr/use-tor-with-python/
-
-
 @logger
 def update_stocks_quotes():
     filtered_stocks = [(stock['isin'], stock['mic'], 'max')
@@ -113,4 +109,3 @@ if __name__ == '__main__':
     update_stocks_quotes()
     update_indices_quotes()
     update_fundamentals()
-    pass
