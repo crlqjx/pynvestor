@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import itertools
 import json
+from pathlib import Path
 from pynvestor import logger
 from pynvestor.app import mongo
 
@@ -13,7 +14,8 @@ class Helpers:
         self._init()
 
     def _init(self):
-        with open(r"D:\Python Projects\red_rat\red_rat\static\rics.json", 'r') as f:
+        app_path = Path(__file__).parents[1]
+        with open(rf"{app_path}\static\rics.json", 'r') as f:
             self._isins_to_rics = json.load(f)
             self._rics_to_isins = {value: key for key, value in self._isins_to_rics.items()}
 

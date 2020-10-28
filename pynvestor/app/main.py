@@ -1,6 +1,7 @@
 import datetime as dt
 import json
 
+from pathlib import Path
 from requests.exceptions import HTTPError
 from pynvestor import logger
 from pynvestor.app import mongo, euronext, reuters
@@ -28,7 +29,8 @@ def update_indices_quotes():
 
 @logger
 def update_fundamentals():
-    with open(r"D:\Python Projects\red_rat\red_rat\static\rics.json", "r") as f:
+    app_path = Path(__file__).parents[1]
+    with open(rf"{app_path}\static\rics.json", "r") as f:
         ric_codes = json.load(f)
 
     data_to_insert = {'income': [], 'balance_sheet': [], 'cash_flow': []}

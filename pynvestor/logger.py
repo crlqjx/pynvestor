@@ -9,7 +9,7 @@ class Logger:
         self._path = os.path.abspath(__file__)
         self._dir_path = os.path.dirname(self._path)
 
-        self.log = logging.getLogger('RED_RAT')
+        self.log = logging.getLogger('PYNVESTOR')
         self.log.setLevel(logging.DEBUG)
 
         formatter = logging.Formatter(fmt='%(asctime)s|%(name)s|%(levelname)s:%(message)s',
