@@ -1,12 +1,14 @@
 import pandas as pd
 
-from pynvestor.app import euronext, mongo
-from pynvestor.app.data_providers import ReutersClient
-from pynvestor.app.helpers import Helpers
+from pynvestor.source import euronext, mongo
+from pynvestor.source.data_providers import ReutersClient
+from pynvestor.source.helpers import Helpers
 from pynvestor import logger
 
 reuters = ReutersClient()
 helpers = Helpers()
+
+# TODO: add stock industry
 
 
 class Screener:

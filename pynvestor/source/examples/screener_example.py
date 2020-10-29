@@ -1,5 +1,5 @@
 import datetime as dt
-from pynvestor.app.screener import Screener
+from pynvestor.source.screener import Screener
 
 today = dt.date.today()
 

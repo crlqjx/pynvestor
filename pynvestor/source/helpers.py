@@ -5,7 +5,7 @@ import itertools
 import json
 from pathlib import Path
 from pynvestor import logger
-from pynvestor.app import mongo
+from pynvestor.source import mongo
 
 
 class Helpers:

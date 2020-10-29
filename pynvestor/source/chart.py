@@ -1,5 +1,5 @@
-from pynvestor.app import yahoo
-from pynvestor.app.helpers import Helpers
+from pynvestor.source import yahoo
+from pynvestor.source.helpers import Helpers
 from plotly.subplots import make_subplots
 
 import plotly.graph_objects as go

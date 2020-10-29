@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 from scipy import optimize
-from pynvestor.app.risk import PortfolioRiskManager
-from pynvestor.app.helpers import Helpers
+from pynvestor.source.risk import PortfolioRiskManager
+from pynvestor.source.helpers import Helpers
 
 
 class Optimizer(PortfolioRiskManager):

@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
 
-from pynvestor.app.portfolio import Portfolio
-from pynvestor.app.helpers import Helpers
+from pynvestor.source.portfolio import Portfolio
+from pynvestor.source.helpers import Helpers
 
 
 class PortfolioRiskManager(Portfolio):

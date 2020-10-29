@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from requests.exceptions import HTTPError
 from pynvestor import logger
-from pynvestor.app import mongo, euronext, reuters
+from pynvestor.source import mongo, euronext, reuters
 
 
 @logger

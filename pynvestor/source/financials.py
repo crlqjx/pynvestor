@@ -1,6 +1,6 @@
 import datetime as dt
-from pynvestor.app import euronext, reuters, mongo
-from pynvestor.app.helpers import Helpers
+from pynvestor.source import euronext, reuters, mongo
+from pynvestor.source.helpers import Helpers
 
 
 class Financials:

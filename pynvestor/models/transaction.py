@@ -1,5 +1,5 @@
 import datetime as dt
-from pynvestor.app import euronext
+from pynvestor.source import euronext
 from dataclasses import dataclass
 from marshmallow import Schema, fields
 from marshmallow_enum import EnumField

@@ -1,6 +1,6 @@
 import datetime as dt
-from pynvestor.app import euronext, mongo
-from pynvestor.app.helpers import Helpers
+from pynvestor.source import euronext, mongo
+from pynvestor.source.helpers import Helpers
 from pynvestor.models.position import Position
 from pynvestor.models.asset_type import AssetType
 from pandas import DataFrame, Series
