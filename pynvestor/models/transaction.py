@@ -57,20 +57,6 @@ class Buy(Transaction):
                          net_cashflow=self._get_net_cashflow(),
                          notes=notes)
 
-
-        self.transaction_type = TransactionType.BUY
-        self.transaction_date = transaction_date
-        self.isin = isin.strip()
-        self.quantity = quantity
-        self.mic = mic.strip()
-        self.price = price
-        self.fee = fee
-        self.name = self._get_name()
-        self.gross_amount = self._get_gross_value()
-        self.transaction_tax = self._get_transaction_tax()
-        self.net_cashflow = self._get_net_cashflow()
-        self.notes = notes
-
     def _get_transaction_tax(self):
         if self.mic == 'XPAR':
             transaction_tax = 0.002 * self.gross_amount
