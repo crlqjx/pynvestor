@@ -4,6 +4,7 @@ from pynvestor.source.helpers import Helpers
 from pynvestor.models.position import Position
 from pynvestor.models.asset_type import AssetType
 from pandas import DataFrame, Series
+from typing import List
 
 
 class Portfolio:
@@ -154,13 +155,22 @@ class Portfolio:
         self._nav_weekly_returns = self._portfolio_navs.pct_change()
         return True
 
-    def save_portfolio_nav(self, shares=None, cashflows=0.0):
+    @staticmethod
+    def add_transaction(transaction: List[dict]):
+        mongo.insert_documents(database_name='transactions', collection_name='transactions', documents=transaction)
+        return True
+
+    def save_portfolio_nav(self, nav_date, shares=None, cashflows=0.0):
+        """
+        method to insert new net asset values in the mongo
+        :param nav_date: date the net asset value
+        :param shares: new total amount of shares, if no cashflows, leave it to None
+        :param cashflows: amount of cashflows
+        :return:
+        """
         if shares is None:
             shares = mongo.find_document('net_asset_values', 'net_asset_values', [("date", -1)])['shares']
-        if self._portfolio_date is None:
-            today = dt.date.today()
-            nav_date = dt.datetime(today.year, today.month, today.day)
-        else:
+        if nav_date is None:
             nav_date = self._portfolio_date
 
         assets = self._portfolio_market_value

@@ -44,6 +44,20 @@ class Transaction:
 class Buy(Transaction):
     def __init__(self, transaction_date: dt.datetime, isin: str, mic: str, quantity: float, price: float, fee: float,
                  notes: str = None):
+        super().__init__(transaction_type=TransactionType.BUY,
+                         transaction_date=transaction_date,
+                         isin=isin.strip(),
+                         quantity=quantity,
+                         mic=mic,
+                         price=price,
+                         fee=fee,
+                         name=self._get_name(),
+                         gross_amount=self._get_gross_value(),
+                         transaction_tax=self._get_transaction_tax(),
+                         net_cashflow=self._get_net_cashflow(),
+                         notes=notes)
+
+
         self.transaction_type = TransactionType.BUY
         self.transaction_date = transaction_date
         self.isin = isin.strip()
@@ -73,21 +87,29 @@ class Buy(Transaction):
 class Sell(Transaction):
     def __init__(self, transaction_date: dt.datetime, isin: str, mic: str, quantity: float, price: float, fee: float,
                  notes: str = None):
-        self.transaction_type = TransactionType.SELL
-        self.transaction_date = transaction_date
-        self.isin = isin.strip()
-        self.quantity = quantity
-        self.mic = mic.strip()
-        self.price = price
-        self.fee = fee
-        self.name = self._get_name()
-        self.gross_amount = self._get_gross_value()
-        self.net_cashflow = self._get_net_cashflow()
-        self.notes = notes
+        super().__init__(transaction_type=TransactionType.SELL,
+                         transaction_date=transaction_date,
+                         isin=isin.strip(),
+                         quantity=quantity,
+                         mic=mic.strip(),
+                         price=price,
+                         fee=fee,
+                         name=self._get_name(),
+                         gross_amount=self._get_gross_value(),
+                         net_cashflow=self._get_net_cashflow(),
+                         notes=notes)
 
     def _get_net_cashflow(self):
         net_cashflow = -self.gross_amount - self.fee
         return round(net_cashflow, 4)
+
+
+class Inflow(Transaction):
+    def __init__(self, transaction_date: dt.datetime, amount: float):
+        super().__init__(transaction_date=transaction_date,
+                         transaction_type=TransactionType.INFLOW,
+                         name='Bank',
+                         net_cashflow=amount)
 
 
 class StockDividend(Transaction):
