@@ -1,0 +1,28 @@
+{% extends "bootstrap/base.html" %}
+
+{% block content %}
+
+<table class="table">
+    <thead>
+    <tr>
+        {% for col_name in df.columns %}
+        <th scope="col">{{ col_name }}</th>
+        {% endfor %}
+    </tr>
+    </thead>
+    <tbody>
+    {% for key, value in df.iterrows() %}
+    <tr>
+        {% for v in value %}
+            {% if df.columns[loop.index - 1] == "isin" %}
+            <td><a href="/chart?isin={{v}}" target="_blank"> {{ v }} </a></td>
+            {% else %}
+            <td>{{ v }}</td>
+            {% endif %}
+        {% endfor %}
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
