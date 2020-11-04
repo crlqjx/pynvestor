@@ -1,16 +1,15 @@
 from flask import Flask, render_template, request
-from flask_bootstrap import Bootstrap
-
-import datetime as dt
+from pynvestor.source.portfolio import Portfolio
 from pynvestor.source.screener import Screener
 from pynvestor.source.chart import Chart
 
-today = dt.date(2020, 10, 28)
+import datetime as dt
+
+today = dt.date(2020, 10, 30)
 
 
 def create_app():
     flask_app = Flask(__name__)
-    Bootstrap(flask_app)
     return flask_app
 
 
@@ -19,7 +18,23 @@ app = create_app()
 
 @app.route('/')
 def index():
-    return 'Main Page'
+    return render_template('index.html')
+
+
+@app.route('/portfolio')
+def portfolio():
+    ptf_date = request.args.get('ptf_date')
+    if ptf_date is None:
+        ptf_date = 'today'
+        ptf = Portfolio()
+    else:
+        ptf_date = dt.date.fromisoformat(ptf_date)
+        ptf = Portfolio(dt.datetime(ptf_date.year, ptf_date.month, ptf_date.day))
+    df_ptf = ptf.to_df()
+    df_ptf.index.name = 'isin'
+    df_ptf.reset_index(inplace=True)
+    return render_template('portfolio.html', df=df_ptf, ptf_date=ptf_date, ptf_value=ptf.portfolio_market_value,
+                           ptf_cash=ptf.cash)
 
 
 @app.route('/run_screener')
@@ -39,7 +54,7 @@ def screener():
     return render_template('screener.html', df=screener_result)
 
 
-@app.route('/chart/')
+@app.route('/chart')
 def show_chart():
     isin = request.args.get('isin')
     chart = Chart(isin)
