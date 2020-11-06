@@ -53,19 +53,29 @@ class Screener:
             self._df_screener = self._df_screener.merge(df_isin, how='left', on='ric')
         return True
 
-    def _get_shares_outstanding(self):
+    def _get_shares_details(self):
         if 'shares_outstanding' not in self._df_screener.columns:
             isins_mics = self._df_screener[['isin', 'mic']].values.tolist()
             instr_details = euronext.get_instruments_details(isins_mics)
             shares_outstanding = {}
+            names = {}
+            subsectors = {}
             for instrument_details in instr_details:
                 for isin, details in instrument_details.items():
                     if details is not None:
                         shares_outstanding[isin] = int(details.get('nbShare'))
+                        names[isin] = details.get('longNm')
+                        if details.get('instrRel') is not None:
+                            subsectors[isin] = details.get('instrRel')[3].get('instrLst').get('lstLbl')
+                        else:
+                            subsectors[isin] = None
 
-            df_shares_out = pd.DataFrame.from_dict(shares_outstanding, orient='index').reset_index()
-            df_shares_out.columns = ['isin', 'shares_outstanding']
-            self._df_screener = self._df_screener.merge(df_shares_out, how='left', on='isin')
+            # df_shares_out = pd.DataFrame.from_dict(shares_outstanding, orient='index').reset_index()
+            # df_shares_out.columns = ['isin', 'shares_outstanding']
+            # self._df_screener = self._df_screener.merge(df_shares_out, how='left', on='isin')
+            df_shares_details = pd.DataFrame([shares_outstanding, names, subsectors]).T.reset_index()
+            df_shares_details.columns = ['isin', 'shares_outstanding', 'names', 'subsectors']
+            self._df_screener = self._df_screener.merge(df_shares_details, how='left', on='isin')
         return True
 
     def _get_last_prices(self):
@@ -84,7 +94,7 @@ class Screener:
 
         if 'shares_outstanding' not in self._df_screener.columns:
             # Get shares outstanding
-            self._get_shares_outstanding()
+            self._get_shares_details()
 
         if 'last_price' not in self._df_screener.columns:
             # Get last prices
