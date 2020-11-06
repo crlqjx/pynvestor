@@ -1,42 +1,44 @@
 {% extends "index.html" %}
-
 {% block main_panel %}
-<p>Portfolio as of {{ ptf_date }}</p>
-<p>Portfolio Value: {{ ptf_value }}</p>
 
-<table class="table">
-    <thead>
-        <tr>
-            {% for col_name in df.columns %}
-            <th scope="col">{{ col_name }}</th>
+<p>Portfolio as of {{ ptf_date }}</p>
+<p>Portfolio Value: {{ ptf_value|round(2) }}</p>
+
+<div class="table-responsive text-nowrap">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                {% for col_name in df.columns %}
+                <th scope="col">{{ col_name }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for key, value in df.iterrows() %}
+            <tr>
+                {% for v in value %}
+                    {% if df.columns[loop.index - 1] == "isin" %}
+                    <td><a href="/chart?isin={{v}}" target="_blank"> {{ v }} </a></td>
+                    {% elif df.columns[loop.index - 1] in ['weight', 'perf since open', 'perf since last close'] %}
+                    <td>{{ (v * 100)|round(2) }}%</td>
+                    {% else %}
+                    <td>{{ v }}</td>
+                    {% endif %}
+                {% endfor %}
+            </tr>
             {% endfor %}
-        </tr>
-    </thead>
-    <tbody>
-        {% for key, value in df.iterrows() %}
-        <tr>
-            {% for v in value %}
-                {% if df.columns[loop.index - 1] == "isin" %}
-                <td><a href="/chart?isin={{v}}" target="_blank"> {{ v }} </a></td>
-                {% elif df.columns[loop.index - 1] in ['weight', 'perf since open', 'perf since last close'] %}
-                <td>{{ (v * 100)|round(2) }}%</td>
+        </tbody>
+        <tfoot>
+            {% for i in range(df.columns|length) %}
+                {% if i + 1 == df.columns|length - 1 %}
+                    <td><b>CASH</b></td>
+                {% elif i + 1 == df.columns|length %}
+                    <td>{{ ptf_cash|round(2) }}</td>
                 {% else %}
-                <td>{{ v }}</td>
+                    <td></td>
                 {% endif %}
             {% endfor %}
-        </tr>
-        {% endfor %}
-    </tbody>
-    <tfoot>
-        {% for i in range(df.columns|length) %}
-            {% if i + 1 == df.columns|length - 1 %}
-                <td><b>CASH</b></td>
-            {% elif i + 1 == df.columns|length %}
-                <td>{{ ptf_cash|round(2) }}</td>
-            {% else %}
-                <td></td>
-            {% endif %}
-        {% endfor %}
-    </tfoot>
-</table>
+        </tfoot>
+    </table>
+</div>
 {% endblock %}

@@ -1,26 +1,32 @@
 {% extends "index.html" %}
 
 {% block main_panel %}
-<table class="table">
-    <thead>
-    <tr>
-        {% for col_name in df.columns %}
-        <th scope="col">{{ col_name }}</th>
+<div class="table-responsive text-nowrap">
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            {% for col_name in df.columns %}
+            <th scope="col">{{ col_name }}</th>
+            {% endfor %}
+        </tr>
+        </thead>
+        <tbody>
+        {% for key, value in df.iterrows() %}
+        <tr>
+            {% for v in value %}
+                {% if df.columns[loop.index - 1] == "isin" %}
+                <td><a href="/chart?isin={{v}}" target="_blank"> {{ v }} </a></td>
+                {% elif df.columns[loop.index - 1] in ['roe', 'gearing', 'operating_margin'] %}
+                <td>{{ (v * 100)|round(2) }}%</td>
+                {% elif df.columns[loop.index - 1] in ['eps', 'per', 'total_equity', 'total_debt', 'revenue', 'operating_income'] %}
+                <td>{{ v|round(2) }}</td>
+                {% else %}
+                <td>{{ v }}</td>
+                {% endif %}
+            {% endfor %}
+        </tr>
         {% endfor %}
-    </tr>
-    </thead>
-    <tbody>
-    {% for key, value in df.iterrows() %}
-    <tr>
-        {% for v in value %}
-            {% if df.columns[loop.index - 1] == "isin" %}
-            <td><a href="/chart?isin={{v}}" target="_blank"> {{ v }} </a></td>
-            {% else %}
-            <td>{{ v }}</td>
-            {% endif %}
-        {% endfor %}
-    </tr>
-    {% endfor %}
-    </tbody>
-</table>
+        </tbody>
+    </table>
+</div>
 {% endblock %}
