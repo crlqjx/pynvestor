@@ -2,14 +2,14 @@
 {% block main_panel %}
 
 <p>Portfolio as of {{ ptf_date }}</p>
-<p>Portfolio Value: {{ ptf_value|round(2) }}</p>
+<p>Portfolio Value: {{ ptf.portfolio_market_value|round(2) }}</p>
 
 <div class="table-responsive text-nowrap">
-    <table class="table table-striped">
+    <table class="table table-striped" id="portfolio_table">
         <thead>
             <tr>
                 {% for col_name in df.columns %}
-                <th scope="col">{{ col_name }}</th>
+                <th scope="col">{{ col_name|replace("_", " ") }}</th>
                 {% endfor %}
             </tr>
         </thead>
@@ -19,8 +19,6 @@
                 {% for v in value %}
                     {% if df.columns[loop.index - 1] == "isin" %}
                     <td><a href="/chart?isin={{v}}" target="_blank"> {{ v }} </a></td>
-                    {% elif df.columns[loop.index - 1] in ['weight', 'perf since open', 'perf since last close'] %}
-                    <td>{{ (v * 100)|round(2) }}%</td>
                     {% else %}
                     <td>{{ v }}</td>
                     {% endif %}
@@ -29,16 +27,47 @@
             {% endfor %}
         </tbody>
         <tfoot>
-            {% for i in range(df.columns|length) %}
-                {% if i + 1 == df.columns|length - 1 %}
-                    <td><b>CASH</b></td>
-                {% elif i + 1 == df.columns|length %}
-                    <td>{{ ptf_cash|round(2) }}</td>
-                {% else %}
-                    <td></td>
-                {% endif %}
-            {% endfor %}
+            <td></td>
+            <td><b>CASH</b></td>
+            <td></td>
+            <td>{{ (ptf.cash_weight * 100)|round(2) }}%</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>{{ ptf.cash|round(2) }}</td>
+            <td></td>
         </tfoot>
     </table>
 </div>
+
+<script>
+<!--    formatting script-->
+
+    var table = document.getElementById("portfolio_table")
+    var table_body = document.querySelectorAll("#portfolio_table tbody td")
+    var perf_cols = ["perf since open", "perf since last close"]
+    for(i = 0; i < table_body.length; ++i) {
+        var table_elem = table_body[i]
+        var corresponding_th = table_elem.closest("table").rows[0].cells[table_elem.cellIndex].textContent
+        if(perf_cols.includes(corresponding_th)) {
+            var perf = parseFloat(table_elem.textContent)
+            if(perf >= 0) {
+                table_elem.textContent = "+".concat(Number(perf * 100).toFixed(2), "%")
+                table_elem.style.color = "green"
+                }
+            else {
+                table_elem.textContent = Number(perf * 100).toFixed(2).concat("%")
+                table_elem.style.color = "red"
+                }
+            }
+        else if(corresponding_th == 'weight') {
+            var weight = parseFloat(table_elem.textContent)
+            table_elem.textContent = Number(weight * 100).toFixed(2).concat("%")
+            }
+        else if(["last price", "market value"].includes(corresponding_th)) {
+            Number(parseFloat(table_elem.textContent)).toFixed(2)
+            }
+        };
+
+</script>
 {% endblock %}
