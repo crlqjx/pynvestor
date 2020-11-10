@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request
 from pynvestor.source.portfolio import Portfolio
 from pynvestor.source.screener import Screener
-from pynvestor.source.chart import Chart
+from pynvestor.source.chart import StockChart, PortfolioChart
 
 import datetime as dt
 
@@ -33,8 +33,13 @@ def portfolio():
     df_ptf = ptf.to_df()
     df_ptf.index.name = 'isin'
     df_ptf.reset_index(inplace=True)
-    return render_template('portfolio.html', df=df_ptf, ptf_date=ptf_date, ptf_value=ptf.portfolio_market_value,
-                           ptf_cash=ptf.cash)
+
+    ptf_chart = PortfolioChart(ptf.portfolio_navs)
+    return render_template('portfolio.html',
+                           df=df_ptf,
+                           ptf=ptf,
+                           ptf_date=ptf_date,
+                           ptf_chart_html=ptf_chart.fig.to_html(full_html=False))
 
 
 @app.route('/run_screener')

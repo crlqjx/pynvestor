@@ -3,10 +3,11 @@ from pynvestor.source.helpers import Helpers
 from plotly.subplots import make_subplots
 
 import plotly.graph_objects as go
+import plotly.express as px
 import datetime as dt
 
 
-class Chart:
+class StockChart:
     def __init__(self, isin):
         self._helpers = Helpers()
         self.isin = isin
@@ -58,4 +59,17 @@ class Chart:
         fig.update_layout(title=title, xaxis_rangeslider_visible=False, yaxis_title='Stock Price')
         fig.update_xaxes(rangebreaks=[dict(bounds=['sat', 'mon'])])
         self.fig = fig
+        return True
+
+
+class PortfolioChart:
+    def __init__(self, portfolio_navs):
+        # TODO: add index levels in dataframe
+        # TODO: show total perf on the chart
+        self._portfolio_navs = portfolio_navs.copy()
+        self._portfolio_navs.name = 'Net Asset Value'
+        self._plot_data()
+
+    def _plot_data(self):
+        self.fig = px.line(self._portfolio_navs, y=self._portfolio_navs.name)
         return True
