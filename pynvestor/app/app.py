@@ -5,7 +5,7 @@ from pynvestor.source.chart import Chart
 
 import datetime as dt
 
-today = dt.date(2020, 10, 30)
+screener_date = dt.date(2020, 11, 5)
 
 
 def create_app():
@@ -49,7 +49,8 @@ def screener():
                                 'roe': (0.10, 1),
                                 'gearing': (0, 1),
                                 'operating_margin': (0.05, 10)},
-                               period='annual', as_of_date=dt.datetime(today.year, today.month, today.day - 1))
+                               period='annual',
+                               as_of_date=dt.datetime(screener_date.year, screener_date.month, screener_date.day - 1))
     screener_result = equity_screener.run()
     return render_template('screener.html', df=screener_result)
 
@@ -57,7 +58,7 @@ def screener():
 @app.route('/chart')
 def show_chart():
     isin = request.args.get('isin')
-    chart = Chart(isin)
+    chart = StockChart(isin)
     return chart.fig.to_html()
 
 
