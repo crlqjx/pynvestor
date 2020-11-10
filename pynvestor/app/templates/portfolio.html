@@ -1,6 +1,8 @@
 {% extends "index.html" %}
 {% block main_panel %}
 
+{{ ptf_chart_html|safe }}
+
 <p>Portfolio as of {{ ptf_date }}</p>
 <p>Portfolio Value: {{ ptf.portfolio_market_value|round(2) }}</p>
 
@@ -36,6 +38,7 @@
             <td></td>
             <td>{{ ptf.cash|round(2) }}</td>
             <td></td>
+            <td></td>
         </tfoot>
     </table>
 </div>
@@ -45,7 +48,7 @@
 
     var table = document.getElementById("portfolio_table")
     var table_body = document.querySelectorAll("#portfolio_table tbody td")
-    var perf_cols = ["perf since open", "perf since last close"]
+    var perf_cols = ["perf since open", "perf since last close", "pnl"]
     for(i = 0; i < table_body.length; ++i) {
         var table_elem = table_body[i]
         var corresponding_th = table_elem.closest("table").rows[0].cells[table_elem.cellIndex].textContent

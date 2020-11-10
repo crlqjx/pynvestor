@@ -20,10 +20,10 @@ class Portfolio:
         method to load and store the portfolio positions
         :return:
         """
-        self._stocks_positions = self._get_portfolio_positions_as_of(at_date=self._portfolio_date)
+        self._positions = self._get_portfolio_positions_as_of(at_date=self._portfolio_date)
 
         quantities = {}
-        for position in self._stocks_positions:
+        for position in self._positions:
             if position.asset_type is AssetType.CASH:
                 self._cash = position.quantity
             else:
@@ -43,7 +43,7 @@ class Portfolio:
         names = {}
         perf_since_open = {}
         perf_since_last_close = {}
-        for position in self._stocks_positions:
+        for position in self._positions:
             if position.asset_type is not AssetType.CASH:
                 isin = position.isin
                 mic = position.mic
@@ -134,6 +134,37 @@ class Portfolio:
         self._cash_weight = self._cash / self._portfolio_market_value
         return True
 
+    def _compute_positions_pnl(self):
+        positions_pnl = {}
+        for position in self._positions:
+            if position.asset_type is AssetType.EQUITY:
+                isin = position.isin
+                transactions = list(mongo.find_documents('transactions',
+                                                         'transactions',
+                                                         projection={"_id": 0},
+                                                         sort=[('transaction_date', 1)],
+                                                         **{'isin': isin, 'transaction_type': {"$in": ['BUY', 'SELL', 'STOCK SPLIT']}}))
+                cumulative_positions = []
+                cum_position = 0
+                for trade in transactions:
+                    cum_position += trade['quantity']
+                    cumulative_positions.append(cum_position)
+                buy_transactions = []
+                for i in range(len(transactions) - 1, -1, -1):
+                    if cumulative_positions[i] == 0:
+                        break
+                    else:
+                        if transactions[i]['transaction_type'] in ['BUY', 'STOCK SPLIT']:
+                            buy_transactions.append(transactions[i])
+
+                sum_quantity = sum(trade['quantity'] for trade in buy_transactions)
+                weighted_average_price = sum(trade['quantity'] * trade['price']
+                                             for trade in buy_transactions if trade['price'] is not None) / sum_quantity
+                positions_pnl[isin] = self._stocks_prices[isin] / weighted_average_price - 1
+
+        self._positions_pnl = positions_pnl
+        return True
+
     def _compute_portfolio_navs(self):
         """
         method to compute the portfolio net asset values
@@ -188,9 +219,10 @@ class Portfolio:
         :return: dataframe
         """
         data = [self._stocks_names, self._stocks_quantities, self._stocks_weights, self._stocks_prices,
-                self._stocks_perf_since_open, self._stocks_perf_since_last_close, self._stocks_market_values]
-        columns = ['name', 'quantity', 'weight', 'last price', 'perf since open', 'perf since last close',
-                   'market value']
+                self._stocks_perf_since_open, self._stocks_perf_since_last_close, self._stocks_market_values,
+                self._positions_pnl]
+        columns = ['name', 'quantity', 'weight', 'last_price', 'perf_since open', 'perf_since_last_close',
+                   'market_value', 'pnl']
         df = DataFrame(data).T
         df.columns = columns
 
@@ -212,6 +244,7 @@ class Portfolio:
         self._stocks_market_values = market_values
 
         self._get_weights()
+        self._compute_positions_pnl()
         self._compute_portfolio_navs()
         self._compute_portfolio_returns()
         return True
@@ -257,8 +290,12 @@ class Portfolio:
         return self._stocks_names
 
     @property
-    def stocks_positions(self):
-        return self._stocks_positions
+    def positions(self):
+        return self._positions
+
+    @property
+    def positions_pnl(self):
+        return self._positions_pnl
 
     @property
     def stocks_perf_since_open(self):
