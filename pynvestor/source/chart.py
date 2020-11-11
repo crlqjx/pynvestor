@@ -1,15 +1,30 @@
 from pynvestor.source import yahoo
 from pynvestor.source.helpers import Helpers
+from pynvestor.source.portfolio import Portfolio
 from plotly.subplots import make_subplots
 
 import plotly.graph_objects as go
 import plotly.express as px
 import datetime as dt
+import abc
 
 
-class StockChart:
-    def __init__(self, isin):
+class Chart:
+    def __init__(self):
         self._helpers = Helpers()
+
+    @abc.abstractmethod
+    def _get_data(self):
+        pass
+
+    @abc.abstractmethod
+    def _plot_data(self):
+        pass
+
+
+class StockChart(Chart):
+    def __init__(self, isin):
+        super().__init__()
         self.isin = isin
         self.yahoo_info = yahoo.get_info_from_isin(self.isin)
         self.yahoo_symbol = self.yahoo_info['symbol']
@@ -62,14 +77,34 @@ class StockChart:
         return True
 
 
-class PortfolioChart:
-    def __init__(self, portfolio_navs):
-        # TODO: add index levels in dataframe
+class PortfolioChart(Chart):
+    def __init__(self, isin_reference_index):
         # TODO: show total perf on the chart
-        self._portfolio_navs = portfolio_navs.copy()
+        super().__init__()
+        self._isin_reference_index = isin_reference_index
+        self._get_data()
         self._portfolio_navs.name = 'Net Asset Value'
         self._plot_data()
 
+    def _get_data(self):
+        self._portfolio_navs = Portfolio().portfolio_navs.to_frame()
+        index_prices = self._helpers.get_prices_from_mongo(self._isin_reference_index,
+                                                           self._portfolio_navs.index[0],
+                                                           dt.datetime.today()).to_frame()
+        chart_data = self._portfolio_navs.join(index_prices)
+        chart_data['index_return'] = chart_data['price'].pct_change().fillna(0)
+
+        perfs = []
+        perf = 100
+        for r in chart_data['index_return'].values:
+            perf *= (1 + r)
+            perfs.append(perf)
+        chart_data['index_returns_base_100'] = perfs
+
+        self._chart_data = chart_data[['navs', 'index_returns_base_100']]
+
+        return True
+
     def _plot_data(self):
-        self.fig = px.line(self._portfolio_navs, y=self._portfolio_navs.name)
+        self.fig = px.line(self._chart_data, labels={'value': 'performance'})
         return True

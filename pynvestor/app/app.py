@@ -34,7 +34,7 @@ def portfolio():
     df_ptf.index.name = 'isin'
     df_ptf.reset_index(inplace=True)
 
-    ptf_chart = PortfolioChart(ptf.portfolio_navs)
+    ptf_chart = PortfolioChart('FR0003500008')
     return render_template('portfolio.html',
                            df=df_ptf,
                            ptf=ptf,
