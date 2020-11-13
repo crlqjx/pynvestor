@@ -5,8 +5,6 @@ from pynvestor.source.chart import StockChart, PortfolioChart
 
 import datetime as dt
 
-screener_date = dt.date(2020, 11, 5)
-
 
 def create_app():
     flask_app = Flask(__name__)
@@ -34,7 +32,7 @@ def portfolio():
     df_ptf.index.name = 'isin'
     df_ptf.reset_index(inplace=True)
 
-    ptf_chart = PortfolioChart('FR0003500008')
+    ptf_chart = PortfolioChart('FR0003500008', 'XPAR')
     return render_template('portfolio.html',
                            df=df_ptf,
                            ptf=ptf,
@@ -54,8 +52,7 @@ def screener():
                                 'roe': (0.10, 1),
                                 'gearing': (0, 1),
                                 'operating_margin': (0.05, 10)},
-                               period='annual',
-                               as_of_date=dt.datetime(screener_date.year, screener_date.month, screener_date.day - 1))
+                               period='annual')
     screener_result = equity_screener.run()
     return render_template('screener.html', df=screener_result)
 

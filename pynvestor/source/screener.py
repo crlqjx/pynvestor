@@ -8,11 +8,9 @@ from pynvestor import logger
 reuters = ReutersClient()
 helpers = Helpers()
 
-# TODO: add stock industry
-
 
 class Screener:
-    def __init__(self, screen_filters, period, as_of_date):
+    def __init__(self, screen_filters, period, as_of_date=None):
         self._period = period
         self._date = as_of_date
         self._df_screener = pd.DataFrame()
@@ -35,7 +33,6 @@ class Screener:
                     {"$sort": {"ric": 1, "date": -1}},
                     {"$group": {"_id": {"ric": "$ric", "report_elem": "$report_elem"},
                                 "ric": {"$first": "$ric"},
-                                # "report_elem": {"$first": "$report_elem"},
                                 "date": {"$first": "$date"},
                                 report_elem.lower().replace(' ', '_'): {"$first": "$value"}}},
                     {"$project": {"_id": 0}}]
@@ -70,18 +67,19 @@ class Screener:
                         else:
                             subsectors[isin] = None
 
-            # df_shares_out = pd.DataFrame.from_dict(shares_outstanding, orient='index').reset_index()
-            # df_shares_out.columns = ['isin', 'shares_outstanding']
-            # self._df_screener = self._df_screener.merge(df_shares_out, how='left', on='isin')
             df_shares_details = pd.DataFrame([shares_outstanding, names, subsectors]).T.reset_index()
             df_shares_details.columns = ['isin', 'shares_outstanding', 'names', 'subsectors']
             self._df_screener = self._df_screener.merge(df_shares_details, how='left', on='isin')
         return True
 
-    def _get_last_prices(self):
-        if 'last_price' not in self._df_screener.columns:
-            self._df_screener['last_price'] = self._df_screener['isin'].apply(
-                lambda x: helpers.get_price_from_mongo(x, self._date))
+    def _get_prices(self):
+        if 'price' not in self._df_screener.columns:
+            if self._date is None:
+                self._df_screener['price'] = self._df_screener['isin'].apply(
+                    lambda x: helpers.get_last_price_in_mongo(x))
+            else:
+                self._df_screener['last_price'] = self._df_screener['isin'].apply(
+                    lambda x: helpers.get_price_from_mongo(x, self._date))
 
     @logger
     def _compute_eps(self):
@@ -96,9 +94,9 @@ class Screener:
             # Get shares outstanding
             self._get_shares_details()
 
-        if 'last_price' not in self._df_screener.columns:
+        if 'price' not in self._df_screener.columns:
             # Get last prices
-            self._get_last_prices()
+            self._get_prices()
 
         # Compute EPS
         self._df_screener['eps'] = (self._df_screener['net_income'] * 1000000) / self._df_screener['shares_outstanding']
@@ -111,7 +109,7 @@ class Screener:
             self._compute_eps()
 
         # Compute PER
-        self._df_screener['per'] = self._df_screener['last_price'] / self._df_screener['eps']
+        self._df_screener['per'] = self._df_screener['price'] / self._df_screener['eps']
         return True
 
     @logger
