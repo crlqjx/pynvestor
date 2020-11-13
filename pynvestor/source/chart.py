@@ -1,4 +1,4 @@
-from pynvestor.source import yahoo
+from pynvestor.source import yahoo, euronext
 from pynvestor.source.helpers import Helpers
 from pynvestor.source.portfolio import Portfolio
 from plotly.subplots import make_subplots
@@ -78,16 +78,18 @@ class StockChart(Chart):
 
 
 class PortfolioChart(Chart):
-    def __init__(self, isin_reference_index):
-        # TODO: show total perf on the chart
+    def __init__(self, isin_reference_index, mic):
         super().__init__()
         self._isin_reference_index = isin_reference_index
+        self._mic = mic
         self._get_data()
         self._portfolio_navs.name = 'Net Asset Value'
         self._plot_data()
 
     def _get_data(self):
         self._portfolio_navs = Portfolio().portfolio_navs.to_frame()
+        reference_index_details = euronext.get_instrument_details(self._isin_reference_index, self._mic)
+        index_name = reference_index_details['instr']['longNm']
         index_prices = self._helpers.get_prices_from_mongo(self._isin_reference_index,
                                                            self._portfolio_navs.index[0],
                                                            dt.datetime.today()).to_frame()
@@ -99,12 +101,14 @@ class PortfolioChart(Chart):
         for r in chart_data['index_return'].values:
             perf *= (1 + r)
             perfs.append(perf)
-        chart_data['index_returns_base_100'] = perfs
+        chart_data[index_name] = perfs
 
-        self._chart_data = chart_data[['navs', 'index_returns_base_100']]
+        self._chart_data = chart_data[['navs', index_name]]
 
         return True
 
     def _plot_data(self):
         self.fig = px.line(self._chart_data, labels={'value': 'performance'})
+        self.fig.data[0].name = 'Portfolio'
+        self.fig.update_layout(legend={'orientation': 'h'})
         return True
