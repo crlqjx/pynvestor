@@ -43,7 +43,7 @@ class Transaction:
 
 class Buy(Transaction):
     def __init__(self, transaction_date: dt.datetime, isin: str, mic: str, quantity: float, price: float, fee: float,
-                 notes: str = None):
+                 notes: str = None, has_transaction_tax: bool = True):
         self.transaction_type = TransactionType.BUY
         self.transaction_date = transaction_date
         self.isin = isin.strip()
@@ -53,12 +53,13 @@ class Buy(Transaction):
         self.fee = fee
         self.name = self._get_name()
         self.gross_amount = self._get_gross_value()
+        self._has_transaction_tax = has_transaction_tax
         self.transaction_tax = self._get_transaction_tax()
         self.net_cashflow = self._get_net_cashflow()
         self.notes = notes
 
     def _get_transaction_tax(self):
-        if self.mic == 'XPAR':
+        if self._has_transaction_tax is True:
             transaction_tax = 0.003 * self.gross_amount
         else:
             transaction_tax = 0.0
@@ -77,13 +78,13 @@ class Sell(Transaction):
         self.transaction_date = transaction_date
         self.isin = isin.strip()
         self.quantity = quantity
-        self.mic=mic.strip()
+        self.mic = mic.strip()
         self.price = price
-        self.fee=fee
-        self.name=self._get_name()
-        self.gross_amount=self._get_gross_value()
-        self.net_cashflow=self._get_net_cashflow()
-        self.notes=notes
+        self.fee = fee
+        self.name = self._get_name()
+        self.gross_amount = self._get_gross_value()
+        self.net_cashflow = self._get_net_cashflow()
+        self.notes = notes
 
     def _get_net_cashflow(self):
         net_cashflow = -self.gross_amount - self.fee
