@@ -64,6 +64,24 @@ class Helpers:
         return result
 
     @staticmethod
+    def get_last_price_in_mongo(isin):
+        try:
+            result = mongo.find_documents('quotes',
+                                          'equities',
+                                          sort=[('time', -1)],
+                                          projection={'_id': 0},
+                                          limit=1,
+                                          **{'isin': isin})[0]
+            price_date = result.get('time')
+            result = result.get('price')
+            logger.log.info(f'price for {isin} on date {price_date.year}-{price_date.month}-{price_date.day} : '
+                            f'{result}')
+        except IndexError:
+            logger.log.warning(f'Could not find any price in mongo for {isin}')
+            result = None
+        return result
+
+    @staticmethod
     def compute_sharpe_ratio(mean_annualized_return, portfolio_vol, risk_free_rate):
         result = ((mean_annualized_return - risk_free_rate) / portfolio_vol)
         return result
