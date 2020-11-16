@@ -10,13 +10,14 @@ class PortfolioRiskManager(Portfolio):
     class to manage portfolio risks
     """
 
-    def __init__(self, risk_free_rate: float, portfolio_path: str = None, lookback_days: int = 500):
-        super().__init__(portfolio_path)
+    def __init__(self, risk_free_rate: float, lookback_days: int = 500):
+        super().__init__()
 
         self._lookback_days = lookback_days
 
         self._compute_nav_volatility()
         self._compute_assets_returns()
+        self._compute_correlation_matrix()
         self._compute_portfolio_volatility()
         self._compute_portfolio_sharpe_ratio(risk_free_rate)
         self._compute_portfolio_value_at_risk()
@@ -35,6 +36,9 @@ class PortfolioRiskManager(Portfolio):
         returns = np.stack(returns)
         self._histo_returns = returns
         return True
+
+    def _compute_correlation_matrix(self):
+        self._correlation_matrix = np.corrcoef(self._histo_returns)
 
     def _compute_portfolio_volatility(self):
         """
@@ -104,14 +108,18 @@ class PortfolioRiskManager(Portfolio):
             portfolio_changes_series.dropna(inplace=True)
 
             sorted_results = portfolio_changes_series.values
+            sorted_results.sort()
             percentile_loc = int(round(percentile / 100 * len(sorted_results), 0))
             value_at_risk = sorted_results[percentile_loc]
 
-        elif method == "normal":
+        elif method == "parametric":
+            raise NotImplementedError
+
+        elif method == "monte_carlo":
             raise NotImplementedError
 
         else:
-            raise NotImplementedError
+            raise AttributeError
 
         self._portfolio_value_at_risk = value_at_risk
         return True
@@ -123,6 +131,10 @@ class PortfolioRiskManager(Portfolio):
     @property
     def assets_std(self):
         return self._assets_std
+
+    @property
+    def correlation_matrix(self):
+        return self._correlation_matrix
 
     @property
     def nav_volatility(self):

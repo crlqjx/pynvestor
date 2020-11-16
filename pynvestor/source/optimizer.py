@@ -6,8 +6,8 @@ from pynvestor.source.helpers import Helpers
 
 
 class Optimizer(PortfolioRiskManager):
-    def __init__(self, risk_free_rate: float, portfolio_path: str = None):
-        super().__init__(risk_free_rate, portfolio_path)
+    def __init__(self, risk_free_rate: float):
+        super().__init__(risk_free_rate)
 
     def min_var(self, method: str = 'algo', mc_simulations: int = 100000):
         returns = self._histo_returns

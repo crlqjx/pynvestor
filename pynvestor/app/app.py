@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request
 from pynvestor.source.portfolio import Portfolio
+from pynvestor.source.risk import PortfolioRiskManager
 from pynvestor.source.screener import Screener
 from pynvestor.source.chart import StockChart, PortfolioChart
 
@@ -38,6 +39,17 @@ def portfolio():
                            ptf=ptf,
                            ptf_date=ptf_date,
                            ptf_chart_html=ptf_chart.fig.to_html(full_html=False))
+
+
+@app.route('/risk')
+def risk_management():
+    risk_manager = PortfolioRiskManager(0.01)
+    return render_template('risk_management.html',
+                           names=list(risk_manager.stocks_names.values()),
+                           correlation_matrix=risk_manager.correlation_matrix,
+                           ptf_vol=risk_manager.annualized_portfolio_volatility,
+                           ptf_sharpe_ratio=risk_manager.portfolio_sharpe_ratio,
+                           ptf_value_at_risk=risk_manager.portfolio_value_at_risk)
 
 
 @app.route('/run_screener')
