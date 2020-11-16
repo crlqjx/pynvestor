@@ -126,8 +126,17 @@ class EuronextClient(MarketDataProvider):
         instr_details = self.get_instrument_details(isin, mic)
         return float(instr_details['instr']['currInstrSess']['lastPx'])
 
+    def get_quotes(self, isin_mic_period: List[Tuple], asynchronously=True):
+        if asynchronously is True:
+            return self.get_quotes_multiple_stocks(isin_mic_period)
+        else:
+            result = []
+            for stock_id in isin_mic_period:
+                result.append(self.get_quotes_single_stock(*stock_id))
+            return result
+
     @logger
-    def get_quotes(self, isin, mic, period):
+    def get_quotes_single_stock(self, isin, mic, period):
         assert period in ['max', 'intraday'], f'period {period} is not available'
 
         url = f"{self._base_url}/intraday_chart/getChartData/{isin}-{mic}/{period}"

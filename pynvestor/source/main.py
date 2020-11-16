@@ -11,7 +11,7 @@ from pynvestor.source import mongo, euronext, reuters
 def update_stocks_quotes():
     filtered_stocks = [(stock['isin'], stock['mic'], 'max')
                        for stock in euronext.all_stocks if stock['mic'] in ['XPAR', 'ALXP']]
-    all_quotes = euronext.get_quotes_multiple_stocks(filtered_stocks)
+    all_quotes = euronext.get_quotes(filtered_stocks, asynchronously=True)
     quotes = [quote for quotes in all_quotes for quote in quotes]  # List flatten
     mongo.insert_documents('quotes', 'equities', quotes)
     return True
@@ -21,10 +21,18 @@ def update_stocks_quotes():
 def update_indices_quotes():
     filtered_indices = [(stock_index['isin'], stock_index['mic'], 'max')
                         for stock_index in euronext.all_indices if stock_index['mic'] in ['XPAR', 'ALXP']]
-    all_quotes = euronext.get_quotes_multiple_stocks(filtered_indices)
+    all_quotes = euronext.get_quotes(filtered_indices, asynchronously=True)
     quotes = [quote for quotes in all_quotes for quote in quotes]  # List flatten
     mongo.insert_documents('quotes', 'equities', quotes)
     return True
+
+
+@logger
+def check_quotes():
+    quotes = list(mongo.find_documents('quotes', 'equities', **{"time": {'$gt': dt.datetime.today()}}))
+    assert len(quotes) == 0
+    # delete in mongo:
+    # mongo.mongo_client.quotes.equities.delete_many({"time": {'$gt': dt.datetime.today()}})
 
 
 @logger

@@ -34,7 +34,7 @@ class StockChart(Chart):
         self._plot_data()
 
     def _get_data(self):
-        data = yahoo.get_quotes(self.yahoo_symbol)
+        data = yahoo.get_quotes_single_stock(self.yahoo_symbol)
         self._data = data
         return True
 
