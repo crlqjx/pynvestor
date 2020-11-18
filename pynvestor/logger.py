@@ -20,7 +20,8 @@ class Logger:
         console_handler.setFormatter(formatter)
         self.log.addHandler(console_handler)
 
-        file_handler = logging.FileHandler(os.path.join(self._dir_path, "debug.log"))
+        file_handler = logging.FileHandler(os.path.join(self._dir_path, 'logs',
+                                                        f'{dt.date.today().strftime("%Y%m%d")}.log'))
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
         self.log.addHandler(file_handler)
