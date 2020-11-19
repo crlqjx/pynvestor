@@ -98,7 +98,7 @@ class PortfolioRiskManager(Portfolio):
             for isin, quantity in self.stocks_quantities.items():
                 prices_series = self._helpers.get_prices_from_mongo(isin=isin,
                                                                     sort=[("time", -1)],
-                                                                    window=self._lookback_days)
+                                                                    window=self._lookback_days + 1)
                 total_market_value = prices_series * quantity
                 df_assets_market_values[isin] = total_market_value
 
@@ -107,10 +107,11 @@ class PortfolioRiskManager(Portfolio):
             portfolio_changes_series = portfolio_market_values_series * portfolio_market_values_series.pct_change()
             portfolio_changes_series.dropna(inplace=True)
 
-            sorted_results = portfolio_changes_series.values
-            sorted_results.sort()
-            percentile_loc = int(round(percentile / 100 * len(sorted_results), 0))
-            value_at_risk = sorted_results[percentile_loc]
+            losses = portfolio_changes_series.values * -1
+            losses.sort()
+            percentile_loc = int(round(percentile / 100 * len(losses), 0))
+            values_at_risk = losses[-percentile_loc:]
+            value_at_risk = values_at_risk[0]
 
         elif method == "parametric":
             raise NotImplementedError
@@ -121,6 +122,8 @@ class PortfolioRiskManager(Portfolio):
         else:
             raise AttributeError
 
+        self._simulated_losses = losses
+        self._values_at_risk = losses[-percentile_loc:]
         self._portfolio_value_at_risk = value_at_risk
         return True
 
