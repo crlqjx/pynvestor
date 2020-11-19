@@ -5,6 +5,8 @@ from plotly.subplots import make_subplots
 
 import plotly.graph_objects as go
 import plotly.express as px
+import pandas as pd
+import numpy as np
 import datetime as dt
 import abc
 
@@ -111,4 +113,30 @@ class PortfolioChart(Chart):
         self.fig = px.line(self._chart_data, labels={'value': 'performance'})
         self.fig.data[0].name = 'Portfolio'
         self.fig.update_layout(legend={'orientation': 'h'})
+        return True
+
+
+class ValueAtRiskChart:
+    def __init__(self, losses, values_at_risk, value_at_risk):
+        self._losses = losses
+        self._values_at_risk = values_at_risk
+        self._value_at_risk = value_at_risk
+
+        self._plot_data()
+
+    def _plot_data(self):
+        lower_bound = int(np.floor(self._losses[0] / 10) * 10)
+        upper_bound = int(np.ceil(self._losses[-1] / 10) * 10)
+        counts, bins = np.histogram(self._losses, bins=range(lower_bound, upper_bound + 10, 10))
+        lower_bounds = bins[:-1]
+        upper_bounds = bins[1:]
+        bins = 0.5 * (bins[:-1] + bins[1:])
+        bins_names = [f'[{lb}; {ub}]' for lb, ub in zip(lower_bounds, upper_bounds)]
+        df = pd.DataFrame.from_dict(
+            {'lower_bounds': lower_bounds, 'upper_bounds': upper_bounds, 'bins_names': bins_names,
+             'counts': counts})
+        self.fig = px.bar(data_frame=df, x=bins, y=counts, labels={'x': 'losses', 'y': 'frequency'},
+                          hover_data=['bins_names'])
+        self.fig.update_traces(hovertemplate='losses=%{customdata[0]}<extra></extra><br>frequency=%{y}')
+        self.fig.update_layout(bargap=0.1)
         return True
