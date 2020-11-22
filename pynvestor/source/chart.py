@@ -1,6 +1,5 @@
 from pynvestor.source import yahoo, euronext
 from pynvestor.source.helpers import Helpers
-from pynvestor.source.portfolio import Portfolio
 from plotly.subplots import make_subplots
 
 import plotly.graph_objects as go
@@ -80,16 +79,17 @@ class StockChart(Chart):
 
 
 class PortfolioChart(Chart):
-    def __init__(self, isin_reference_index, mic):
+    def __init__(self, portfolio_navs, isin_reference_index, mic):
         super().__init__()
         self._isin_reference_index = isin_reference_index
         self._mic = mic
+        self._portfolio_navs = portfolio_navs
         self._get_data()
-        self._portfolio_navs.name = 'Net Asset Value'
         self._plot_data()
 
     def _get_data(self):
-        self._portfolio_navs = Portfolio().portfolio_navs.to_frame()
+        self._portfolio_navs = self._portfolio_navs.to_frame()
+        self._portfolio_navs.name = 'Net Asset Value'
         reference_index_details = euronext.get_instrument_details(self._isin_reference_index, self._mic)
         index_name = reference_index_details['instr']['longNm']
         index_prices = self._helpers.get_prices_from_mongo(self._isin_reference_index,
@@ -131,12 +131,37 @@ class ValueAtRiskChart:
         lower_bounds = bins[:-1]
         upper_bounds = bins[1:]
         bins = 0.5 * (bins[:-1] + bins[1:])
-        bins_names = [f'[{lb}; {ub}]' for lb, ub in zip(lower_bounds, upper_bounds)]
+        bins_names = []
+        bins_colors = []
+        for lb, ub in zip(lower_bounds, upper_bounds):
+            bins_names.append(f'[{lb}; {ub}]')
+            bins_colors.append('cornflowerblue')
+            if lb > self._value_at_risk:
+                bins_colors[-1] = 'red'
         df = pd.DataFrame.from_dict(
             {'lower_bounds': lower_bounds, 'upper_bounds': upper_bounds, 'bins_names': bins_names,
              'counts': counts})
-        self.fig = px.bar(data_frame=df, x=bins, y=counts, labels={'x': 'losses', 'y': 'frequency'},
+        self.fig = px.bar(data_frame=df,
+                          x=bins,
+                          y=counts,
+                          labels={'x': 'losses', 'y': 'frequency'},
                           hover_data=['bins_names'])
-        self.fig.update_traces(hovertemplate='losses=%{customdata[0]}<extra></extra><br>frequency=%{y}')
+        self.fig.update_traces(hovertemplate='losses=%{customdata[0]}<extra></extra><br>frequency=%{y}',
+                               marker_color=bins_colors)
+        self.fig.add_shape(type='line',
+                           y0=0,
+                           y1=max(counts)/2,
+                           x0=self._value_at_risk,
+                           x1=self._value_at_risk,
+                           line={'color': 'red', 'width': 4, 'dash': 'dashdot'})
+        self.fig.add_trace(go.Scatter(
+            x=[self._value_at_risk + 5],
+            y=[max(counts)/2.2],
+            text=[f'VaR: {round(self._value_at_risk, 2)}'],
+            mode='text',
+            textposition='top right',
+            textfont={'color': 'red', 'size': 18},
+            showlegend=False
+        ))
         self.fig.update_layout(bargap=0.1)
         return True

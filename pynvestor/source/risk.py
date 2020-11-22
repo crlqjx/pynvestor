@@ -123,7 +123,7 @@ class PortfolioRiskManager(Portfolio):
             raise AttributeError
 
         self._simulated_losses = losses
-        self._values_at_risk = losses[-percentile_loc:]
+        self._portfolio_values_at_risk = losses[-percentile_loc:]
         self._portfolio_value_at_risk = value_at_risk
         return True
 
@@ -154,3 +154,11 @@ class PortfolioRiskManager(Portfolio):
     @property
     def portfolio_value_at_risk(self):
         return self._portfolio_value_at_risk
+
+    @property
+    def portfolio_values_at_risk(self):
+        return self._portfolio_values_at_risk
+
+    @property
+    def simulated_losses(self):
+        return self._simulated_losses
