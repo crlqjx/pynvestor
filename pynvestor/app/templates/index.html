@@ -13,30 +13,35 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
 
-<body>
-{% block content %}
-<div class="container-fluid">
+<header>
+    <nav class="navbar navbar-expand-lg justify-content-between">
+        <a class="navbar-brand" href="/">
+            <img src="{{ url_for('static', filename='logo_292b2c_small.png') }}" class="logo">  Turtle Capital
+        </a>
+        <div class="navbar">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/portfolio">Portfolio</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/screener">Screener</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/risk">Risk</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</header>
 
-    <div class="row">
-        <div class="col-2 px-1 position-fixed" id="sticky-sidebar">
-            <div class="div-info">
-                <a href="/"><img src="{{ url_for('static', filename='logo_292b2c.png') }}" class="logo"></a>
-            </div>
-            <div class="nav flex-column flex-nowrap vh-100 overflow-auto text-white p-2" id="nav-elements">
-                <a href="/portfolio" class="nav-link">Portfolio</a>
-                <a href="/screener" class="nav-link">Screener</a>
-                <a href="/risk" class="nav-link">Risk</a>
-            </div>
-        </div>
-        <div class="col-9 offset-2" id="main">
-            {% block main_panel %}
-            <h1>Main Area</h1>
-            <p>Some data</p>
-            {% endblock %}
-        </div>
-    </div>
-</div>
+
+<body>
+
+{% block body %}
+<h1>Main Area</h1>
+<p>Some data</p>
 {% endblock %}
+
 
 <!-- Optional JavaScript -->
 <!-- jQuery first, then Popper.js, then Bootstrap JS -->
@@ -49,6 +54,7 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"
         integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k"
         crossorigin="anonymous"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 
 </body>
 
