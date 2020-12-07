@@ -1,7 +1,8 @@
 {% extends "index.html" %}
-{% block main_panel %}
+{% block body %}
 
-{{ ptf_chart_html|safe }}
+
+<div id="portfolio_chart"></div>
 
 <p>Portfolio as of {{ ptf_date }}</p>
 <p>Portfolio Value: {{ ptf.portfolio_market_value|round(2) }}</p>
@@ -42,6 +43,8 @@
     </table>
 </div>
 
+
+
 <script>
 <!--    formatting script-->
 
@@ -72,4 +75,16 @@
         };
 
 </script>
+
+        <script type="text/javascript" src="https://code.highcharts.com/stock/highstock.js"></script>
+        <script type="text/javascript" src="https://code.highcharts.com/stock/modules/data.js"></script>
+        <script type="text/javascript" src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+        <script type="text/javascript" src="https://code.highcharts.com/stock/modules/export-data.js"></script>
+        <script type="text/javascript" src="/static/js/highcharts-stockchart.js"></script>
+        <script>
+            var ptf_chart_params = {{ ptf_chart_params|safe }}
+            plot("portfolio_chart", ptf_chart_params)
+        </script>
+
+
 {% endblock %}

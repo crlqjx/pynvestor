@@ -1,0 +1,27 @@
+{% extends "index.html" %}
+{% block body %}
+
+<link href="https://code.highcharts.com/css/annotations/popup.css" rel="stylesheet" />
+<link href="https://code.highcharts.com/css/stocktools/gui.css" rel="stylesheet" />
+
+
+
+<div id="stock_chart" style="height: 700px; width: 40%"></div>
+
+
+
+<script type="text/javascript" src="https://code.highcharts.com/stock/highstock.js"></script>
+<script type="text/javascript" src="https://code.highcharts.com/stock/modules/data.js"></script>
+<script type="text/javascript" src="https://code.highcharts.com/stock/indicators/indicators-all.js"></script>
+<script type="text/javascript" src="https://code.highcharts.com/stock/modules/drag-panes.js"></script>
+<script type="text/javascript" src="https://code.highcharts.com/modules/annotations-advanced.js"></script>
+<script type="text/javascript" src="https://code.highcharts.com/modules/price-indicator.js"></script>
+<script type="text/javascript" src="https://code.highcharts.com/modules/full-screen.js"></script>
+<script type="text/javascript" src="https://code.highcharts.com/modules/stock-tools.js"></script>
+<script type="text/javascript" src="/static/js/highcharts-stockchart.js"></script>
+<script>
+    var stock_chart_params = {{ stock_chart_params|safe }}
+    plot("stock_chart", stock_chart_params)
+</script>
+
+{% endblock %}
