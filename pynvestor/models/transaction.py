@@ -74,6 +74,7 @@ class Buy(Transaction):
 class Sell(Transaction):
     def __init__(self, transaction_date: dt.datetime, isin: str, mic: str, quantity: float, price: float, fee: float,
                  notes: str = None):
+        assert quantity < 0, "quantity must be negative"
         self.transaction_type = TransactionType.SELL
         self.transaction_date = transaction_date
         self.isin = isin.strip()
