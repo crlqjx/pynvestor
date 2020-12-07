@@ -5,6 +5,7 @@ from pynvestor.source.screener import Screener
 from pynvestor.source.chart import StockChart, PortfolioChart, ValueAtRiskChart
 
 import datetime as dt
+import json
 
 
 def create_app():
@@ -38,7 +39,7 @@ def portfolio():
                            df=df_ptf,
                            ptf=ptf,
                            ptf_date=ptf_date,
-                           ptf_chart_html=ptf_chart.fig.to_html(full_html=False))
+                           ptf_chart_params=json.dumps(ptf_chart.highcharts_parameters))
 
 
 @app.route('/risk')
@@ -52,7 +53,7 @@ def risk_management():
                            ptf_vol=risk_manager.annualized_portfolio_volatility,
                            ptf_sharpe_ratio=risk_manager.portfolio_sharpe_ratio,
                            ptf_value_at_risk=risk_manager.portfolio_value_at_risk,
-                           var_chart_html=var_chart.fig.to_html(full_html=False))
+                           var_chart_html=var_chart.fig)
 
 
 @app.route('/run_screener')
@@ -67,7 +68,7 @@ def screener():
                                 'roe': (0.10, 1),
                                 'gearing': (0, 1),
                                 'operating_margin': (0.05, 10)},
-                               period='annual')
+                               period='interim')
     screener_result = equity_screener.run()
     return render_template('screener.html', df=screener_result)
 
@@ -76,7 +77,6 @@ def screener():
 def show_chart():
     isin = request.args.get('isin')
     chart = StockChart(isin)
-    return chart.fig.to_html()
+    return render_template('stock.html', stock_chart_params=json.dumps(chart.highcharts_parameters))
 
-
-app.run(debug=True)
+app.run(debug=False)

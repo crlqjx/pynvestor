@@ -1,6 +1,7 @@
 from pynvestor.source import yahoo, euronext
 from pynvestor.source.helpers import Helpers
-from plotly.subplots import make_subplots
+from pynvestor.models.quotes import Quotes
+from highcharts import Highstock
 
 import plotly.graph_objects as go
 import plotly.express as px
@@ -18,10 +19,6 @@ class Chart:
     def _get_data(self):
         pass
 
-    @abc.abstractmethod
-    def _plot_data(self):
-        pass
-
 
 class StockChart(Chart):
     def __init__(self, isin):
@@ -30,51 +27,119 @@ class StockChart(Chart):
         self.yahoo_info = yahoo.get_info_from_isin(self.isin)
         self.yahoo_symbol = self.yahoo_info['symbol']
         self.name = self.yahoo_info['longname']
+        self.title = f'{self.isin} - {self.name}'
+        self.increasing_color = '#03F71B'
+        self.decreasing_color = '#ff2626'
 
         self._get_data()
-        self._plot_data()
 
     def _get_data(self):
+        current_data = euronext.get_instrument_details(self.isin)
+        current_open = float(current_data['instr']['currInstrSess']['openPx'])
+        current_high = float(current_data['instr']['perf'][2]['highPx'])
+        current_low = float(current_data['instr']['perf'][2]['lowPx'])
+        current_last = float(current_data['instr']['currInstrSess']['lastPx'])
+        current_volume = int(float(current_data['instr']['currInstrSess']['tradedQty']))
+
+        current_date = dt.datetime.utcnow().timestamp() * 1000
+
         data = yahoo.get_quotes(self.yahoo_symbol)
-        self._data = data
-        return True
+        dates = [d * 1000 for d in data['chart']['result'][0]['timestamp']] + [current_date]
+        chart_data = data['chart']['result'][0]['indicators']['quote'][0]
+        stock_open = chart_data['open'] + [current_open]
+        stock_close = chart_data['close'] + [current_last]
+        stock_high = chart_data['high'] + [current_high]
+        stock_low = chart_data['low'] + [current_low]
+        stock_volume = chart_data['volume'] + [current_volume]
 
-    def _plot_data(self):
-        title = f'{self.isin} - {self.name}'
-        increasing_color = '#03F71B'
-        decreasing_color = '#ff2626'
-
-        dates = [dt.date.fromtimestamp(d) for d in self._data['chart']['result'][0]['timestamp']]
-        chart_data = self._data['chart']['result'][0]['indicators']['quote'][0]
-        stock_open = chart_data['open']
-        stock_close = chart_data['close']
-        stock_high = chart_data['high']
-        stock_low = chart_data['low']
-        stock_volume = chart_data['volume']
         volume_colors = []
         for c, o in zip(stock_close, stock_open):
             if (c is None and o is None) or (c - o) > 0:
-                volume_colors.append(increasing_color)
+                volume_colors.append(self.increasing_color)
             else:
-                volume_colors.append(decreasing_color)
+                volume_colors.append(self.decreasing_color)
 
-        fig = make_subplots(rows=4, cols=1, shared_xaxes=True, specs=[[{'rowspan': 3}],
-                                                                      [None],
-                                                                      [None],
-                                                                      [{'rowspan': 1}]])
-        price_chart = go.Candlestick(x=dates, open=stock_open, high=stock_high, low=stock_low, close=stock_close,
-                                     showlegend=False)
-        price_chart.increasing.fillcolor = increasing_color
-        price_chart.increasing.line.color = increasing_color
-        price_chart.decreasing.fillcolor = decreasing_color
-        price_chart.decreasing.line.color = decreasing_color
-        volume_chart = go.Bar(x=dates, y=stock_volume, showlegend=False)
-        volume_chart.marker.color = volume_colors
-        fig.add_trace(price_chart, row=1, col=1)
-        fig.add_trace(volume_chart, row=4, col=1)
-        fig.update_layout(title=title, xaxis_rangeslider_visible=False, yaxis_title='Stock Price')
-        fig.update_xaxes(rangebreaks=[dict(bounds=['sat', 'mon'])])
-        self.fig = fig
+        ohlc = [[d, o, h, l, c] for d, o, h, l, c in zip(dates, stock_open, stock_high, stock_low, stock_close)]
+        volume = [{'x': d, 'y': v, 'color': c} for (d, v, c) in zip(dates, stock_volume, volume_colors)]
+
+        highcharts_parameters = {
+            'series': [
+                {
+                    'type': 'candlestick',
+                    'name': self.name,
+                    'data': ohlc
+                },
+                {
+                    'type': 'column',
+                    'name': 'Volume',
+                    'data': volume,
+                    'yAxis': 1
+                }
+            ],
+            'scrollbar': {'enabled': False},
+            'plotOptions': {
+                'series': {
+                    'turboThreshold': 0,
+                },
+
+                'candlestick': {
+                    'color': f'{self.decreasing_color}',
+                    'upColor': f'{self.increasing_color}',
+                    'tooltip': {
+                        'valueDecimals': 2
+                    }
+                },
+            },
+            'rangeSelector': {
+                'selected': 4
+            },
+
+            'title': {
+                'text': f'{self.title}'
+            },
+
+            'yAxis': [{
+                'labels': {
+                    'align': 'left'
+                },
+                'height': '80%',
+                'resize': {
+                    'enabled': True
+                }
+            }, {
+                'labels': {
+                    'align': 'left'
+                },
+                'top': '80%',
+                'height': '20%',
+                'offset': 0
+            }],
+            'tooltip': {
+                'shape': 'square',
+                'headerShape': 'callout',
+                'borderWidth': 0,
+                'shadow': False
+            },
+            'responsive': {
+                'rules': [{
+                    'condition': {
+                        'maxWidth': 800
+                    },
+                    'chartOptions': {
+                        'rangeSelector': {
+                            'inputEnabled': False
+                        }
+                    }
+                }]
+            }
+        }
+
+        # self.stock_quotes = Quotes(dates, stock_open, stock_close, stock_high, stock_low, stock_volume)
+        self.highcharts_parameters = highcharts_parameters
+
+        # TODO: add moving averages
+        # self.stock_quotes.moving_average_prices(20)
+        # self.stock_quotes.moving_average_volumes(20)
         return True
 
 
@@ -84,36 +149,52 @@ class PortfolioChart(Chart):
         self._isin_reference_index = isin_reference_index
         self._mic = mic
         self._portfolio_navs = portfolio_navs
+        self.title = "Portfolio Performance"
         self._get_data()
-        self._plot_data()
 
     def _get_data(self):
-        self._portfolio_navs = self._portfolio_navs.to_frame()
-        self._portfolio_navs.name = 'Net Asset Value'
         reference_index_details = euronext.get_instrument_details(self._isin_reference_index, self._mic)
-        index_name = reference_index_details['instr']['longNm']
+        self._index_name = reference_index_details['instr']['longNm']
         index_prices = self._helpers.get_prices_from_mongo(self._isin_reference_index,
                                                            self._portfolio_navs.index[0],
                                                            dt.datetime.today()).to_frame()
-        chart_data = self._portfolio_navs.join(index_prices)
+        chart_data = self._portfolio_navs.to_frame().join(index_prices)
         chart_data['index_return'] = chart_data['price'].pct_change().fillna(0)
-
         perfs = []
         perf = 100
         for r in chart_data['index_return'].values:
             perf *= (1 + r)
             perfs.append(perf)
-        chart_data[index_name] = perfs
+        chart_data['reference_index_base100'] = perfs
 
-        self._chart_data = chart_data[['navs', index_name]]
+        dates = [d.timestamp() * 1000 for d in chart_data.index]
+        reference_index = [[d, index_base100] for d, index_base100 in
+                           zip(dates, tuple(chart_data['reference_index_base100'].values))]
+        portfolio_navs = [[d, nav] for d, nav in zip(dates, tuple(chart_data['navs'].values))]
+
+        highcharts_data = [{'data': list(reference_index),
+                            'name': self._index_name,
+                            'tooltip': {'valueDecimals': 2},
+                            'color': '#ff2626',
+                            'opacity': 0.3},
+                           {'data': list(portfolio_navs),
+                            'name': 'Portfolio',
+                            'tooltip': {'valueDecimals': 2},
+                            'color': '#ffdf00'}]
+
+        highcharts_parameters = {'rangeSelector': {'selected': 5},
+                                 'navigator': {'enabled': False},
+                                 'scrollbar': {'enabled': False},
+                                 'title': {'text': self.title},
+                                 'series': highcharts_data}
+
+        self._highcharts_parameters = highcharts_parameters
 
         return True
 
-    def _plot_data(self):
-        self.fig = px.line(self._chart_data, labels={'value': 'performance'})
-        self.fig.data[0].name = 'Portfolio'
-        self.fig.update_layout(legend={'orientation': 'h'})
-        return True
+    @property
+    def highcharts_parameters(self):
+        return self._highcharts_parameters
 
 
 class ValueAtRiskChart:
@@ -150,13 +231,13 @@ class ValueAtRiskChart:
                                marker_color=bins_colors)
         self.fig.add_shape(type='line',
                            y0=0,
-                           y1=max(counts)/2,
+                           y1=max(counts) / 2,
                            x0=self._value_at_risk,
                            x1=self._value_at_risk,
                            line={'color': 'red', 'width': 4, 'dash': 'dashdot'})
         self.fig.add_trace(go.Scatter(
             x=[self._value_at_risk + 5],
-            y=[max(counts)/2.2],
+            y=[max(counts) / 2.2],
             text=[f'VaR: {round(self._value_at_risk, 2)}'],
             mode='text',
             textposition='top right',
