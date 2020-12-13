@@ -16,11 +16,11 @@ class Quotes:
         return True
 
     def moving_average_prices(self, window):
-        data = pd.Series(self.close_prices)
+        data = pd.Series(self.close_prices).interpolate()  # to deal with missing data
         data.name = 'price'
         self._get_moving_average(data, window)
 
     def moving_average_volumes(self, window):
-        data = pd.Series(self.volumes)
+        data = pd.Series(self.volumes).interpolate()  # to deal with missing data
         data.name = 'volume'
         self._get_moving_average(data, window)
