@@ -64,6 +64,26 @@ class EuronextClient(MarketDataProvider):
 
         return all_indices
 
+    @staticmethod
+    def get_exch_code_from_mic(mic):
+        transco = {
+            'XPAR': 'XPAR',
+            'ALXP': 'XPAR',
+            'XMLI': 'XPAR',
+            'XBRU': 'XBRU',
+            'VPXB': 'XBRU',
+            'MLXB': 'XBRU',
+            'ALXB': 'XBRU',
+            'XDUB': 'XDUB',
+            'XESM': 'XDUB',
+            'XMSM': 'XDUB',
+            'XLIS': 'XLIS',
+            'ALXL': 'XLIS',
+            'XAMS': 'XAMS',
+            'TNLB': 'TNLB'
+        }
+        return transco.get(mic)
+
     @logger
     def search_in_euronext(self, query):
         url = f"https://live.euronext.com/fr/instrumentSearch/searchJSON?q={query}"
@@ -83,26 +103,19 @@ class EuronextClient(MarketDataProvider):
                 mic = self.get_mic_from_isin(isin)
             except AssertionError as e:
                 raise AssertionError(f'{e}: specify mic')
-        url = f"https://gateway.euronext.com/api/instrumentDetail?code={isin}&codification=ISIN&exchCode={mic}&" \
+
+        exch_code = self.get_exch_code_from_mic(mic)
+        url = f"https://gateway.euronext.com/api/instrumentDetail?code={isin}&codification=ISIN&exchCode={exch_code}&" \
               f"sessionQuality=RT&view=FULL" \
               f"&authKey={config['euronextapikey']}"
         resp = self._session.get(url, data={'theme_name': 'euronext_live'})
         resp.raise_for_status()
         return resp.json()
 
-    @staticmethod
-    def get_instruments_details(isins_mics):
+    @logger
+    def get_instruments_details(self, isins_mics):
         async def fetch(isin, mic):
-            if mic in ['ALXP', 'XMLI']:
-                exch_code = 'XPAR'
-            elif mic in ['VPXB', 'MLXB', 'ALXB']:
-                exch_code = 'XBRU'
-            elif mic in ['XESM', 'XMSM']:
-                exch_code = 'XDUB'
-            elif mic in ['ALXL']:
-                exch_code = 'XLIS'
-            else:
-                exch_code = mic
+            exch_code = self.get_exch_code_from_mic(mic)
             url = f"https://gateway.euronext.com/api/instrumentDetail?code={isin}&codification=" \
                   f"ISIN&exchCode={exch_code}&sessionQuality=RT&view=FULL&authKey={config['euronextapikey']}"
             try:
