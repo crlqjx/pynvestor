@@ -18,10 +18,10 @@
 <script type="text/javascript" src="https://code.highcharts.com/modules/price-indicator.js"></script>
 <script type="text/javascript" src="https://code.highcharts.com/modules/full-screen.js"></script>
 <script type="text/javascript" src="https://code.highcharts.com/modules/stock-tools.js"></script>
-<script type="text/javascript" src="/static/js/highcharts-stockchart.js"></script>
+<script type="text/javascript" src="/static/js/highcharts.js"></script>
 <script>
     var stock_chart_params = {{ stock_chart_params|safe }}
-    plot("stock_chart", stock_chart_params)
+    stockChart("stock_chart", stock_chart_params)
 </script>
 
 {% endblock %}

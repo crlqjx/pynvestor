@@ -1,8 +1,8 @@
 {% extends "index.html" %}
 
-{% block main_panel %}
+{% block body %}
 
-{{ var_chart_html|safe }}
+<div id="var_chart"></div>
 
 <div class="table-responsive text-nowrap">
     <table class="table table-striped" id="portfolioRiskMetrics">
@@ -55,5 +55,16 @@
         </tbody>
     </table>
 </div>
+
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/highcharts-more.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+<script type="text/javascript" src="/static/js/highcharts.js"></script>
+<script>
+    var var_chart_params = {{ var_chart_params|safe }}
+    chart("var_chart", var_chart_params)
+</script>
 
 {% endblock %}

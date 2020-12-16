@@ -1,11 +1,6 @@
 from pynvestor.source import yahoo, euronext
 from pynvestor.source.helpers import Helpers
-from pynvestor.models.quotes import Quotes
-from highcharts import Highstock
 
-import plotly.graph_objects as go
-import plotly.express as px
-import pandas as pd
 import numpy as np
 import datetime as dt
 import abc
@@ -24,6 +19,7 @@ class StockChart(Chart):
     def __init__(self, isin):
         super().__init__()
         self.isin = isin
+        self.mic = euronext.get_mic_from_isin(isin)
         self.yahoo_info = yahoo.get_info_from_isin(self.isin)
         self.yahoo_symbol = self.yahoo_info['symbol']
         self.name = self.yahoo_info['longname']
@@ -134,12 +130,8 @@ class StockChart(Chart):
             }
         }
 
-        # self.stock_quotes = Quotes(dates, stock_open, stock_close, stock_high, stock_low, stock_volume)
         self.highcharts_parameters = highcharts_parameters
 
-        # TODO: add moving averages
-        # self.stock_quotes.moving_average_prices(20)
-        # self.stock_quotes.moving_average_volumes(20)
         return True
 
 
@@ -172,12 +164,12 @@ class PortfolioChart(Chart):
                            zip(dates, tuple(chart_data['reference_index_base100'].values))]
         portfolio_navs = [[d, nav] for d, nav in zip(dates, tuple(chart_data['navs'].values))]
 
-        highcharts_data = [{'data': list(reference_index),
+        highcharts_data = [{'data': reference_index,
                             'name': self._index_name,
                             'tooltip': {'valueDecimals': 2},
                             'color': '#ff2626',
                             'opacity': 0.3},
-                           {'data': list(portfolio_navs),
+                           {'data': portfolio_navs,
                             'name': 'Portfolio',
                             'tooltip': {'valueDecimals': 2},
                             'color': '#ffdf00'}]
@@ -203,46 +195,72 @@ class ValueAtRiskChart:
         self._values_at_risk = values_at_risk
         self._value_at_risk = value_at_risk
 
-        self._plot_data()
+        self._get_data()
 
-    def _plot_data(self):
-        lower_bound = int(np.floor(self._losses[0] / 10) * 10)
-        upper_bound = int(np.ceil(self._losses[-1] / 10) * 10)
-        counts, bins = np.histogram(self._losses, bins=range(lower_bound, upper_bound + 10, 10))
+    def _get_data(self):
+        bin_size = 10
+        lower_bound = int(np.floor(self._losses[0] / bin_size) * bin_size)
+        upper_bound = int(np.ceil(self._losses[-1] / bin_size) * bin_size)
+        counts, bins = np.histogram(self._losses, bins=range(lower_bound, upper_bound + bin_size, bin_size))
         lower_bounds = bins[:-1]
         upper_bounds = bins[1:]
-        bins = 0.5 * (bins[:-1] + bins[1:])
         bins_names = []
-        bins_colors = []
-        for lb, ub in zip(lower_bounds, upper_bounds):
+        var_position = None
+        for idx, (lb, ub) in enumerate(zip(lower_bounds, upper_bounds)):
             bins_names.append(f'[{lb}; {ub}]')
-            bins_colors.append('cornflowerblue')
-            if lb > self._value_at_risk:
-                bins_colors[-1] = 'red'
-        df = pd.DataFrame.from_dict(
-            {'lower_bounds': lower_bounds, 'upper_bounds': upper_bounds, 'bins_names': bins_names,
-             'counts': counts})
-        self.fig = px.bar(data_frame=df,
-                          x=bins,
-                          y=counts,
-                          labels={'x': 'losses', 'y': 'frequency'},
-                          hover_data=['bins_names'])
-        self.fig.update_traces(hovertemplate='losses=%{customdata[0]}<extra></extra><br>frequency=%{y}',
-                               marker_color=bins_colors)
-        self.fig.add_shape(type='line',
-                           y0=0,
-                           y1=max(counts) / 2,
-                           x0=self._value_at_risk,
-                           x1=self._value_at_risk,
-                           line={'color': 'red', 'width': 4, 'dash': 'dashdot'})
-        self.fig.add_trace(go.Scatter(
-            x=[self._value_at_risk + 5],
-            y=[max(counts) / 2.2],
-            text=[f'VaR: {round(self._value_at_risk, 2)}'],
-            mode='text',
-            textposition='top right',
-            textfont={'color': 'red', 'size': 18},
-            showlegend=False
-        ))
-        self.fig.update_layout(bargap=0.1)
+            if lb < self._value_at_risk < ub:
+                var_position = idx + (self._value_at_risk - lb) / bin_size - 0.5
+
+        highcharts_parameters = {
+            'chart': {'zoomType': 'x'},
+            'title': {'text': 'Value At Risk 95%'},
+            'plotOptions': {
+                'column': {
+                    'pointPadding': 0,
+                    'borderWidth': 0,
+                    'groupPadding': 0,
+                    'shadow': False,
+                    'colorByPoint': False
+                }
+            },
+            'xAxis': {
+                'categories': bins_names,
+                'plotBands': {
+                    'from': var_position,
+                    'to': len(bins) - 1,
+                    'color': '#ff9999',
+                    'label': {'text': f'VaR 95%: {round(self._value_at_risk, 2)} EUR',
+                              'align': 'left',
+                              'x': 30,
+                              'y': 50,
+                              'style': {
+                                  'fontSize': 12,
+                                  'fontWeight': 'bold'
+                              }
+                              }
+                }
+            },
+            'yAxis': [{
+                'labels': {
+                    'align': 'left'
+                },
+                'resize': {
+                    'enabled': True
+                }
+            }],
+            'series': [
+                {
+                    'type': 'column',
+                    'data': counts,
+                    'color': '#99c2ff'
+                }
+            ]
+        }
+        self._highcharts_parameters = highcharts_parameters
+
         return True
+
+    @property
+    def highcharts_parameters(self):
+        return self._highcharts_parameters
+
