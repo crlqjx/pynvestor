@@ -11,6 +11,7 @@ def test_euronext():
     actual_get_exch_code_from_mic_result = euronext.get_exch_code_from_mic(actual_get_mic_from_isin_result)
     actual_get_quotes_multiple_stocks_result = euronext.get_quotes_multiple_stocks([('FR0010397232', 'ALXP', 'max'),
                                                                                     ('FR0005691656', 'XPAR', 'max')])
+    actual_get_index_composition_result = euronext.get_index_composition('FR0003999499', 'XPAR')  # CAC All Tradable
     assert actual_get_instrument_details_result is not None
     assert 'instr' in actual_get_instrument_details_result.keys()
     assert actual_get_instrument_details_result['instr']['longNm'].upper() == 'NOVACYT'
@@ -21,6 +22,8 @@ def test_euronext():
     assert len(actual_get_quotes_multiple_stocks_result) == 2
     for elem in actual_get_quotes_multiple_stocks_result:
         assert type(elem) is list
+    assert type(actual_get_index_composition_result) is dict
+    assert 'isin'.upper() in actual_get_index_composition_result.keys()
 
 
 def test_reuters():

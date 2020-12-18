@@ -6,6 +6,7 @@ import os
 import re
 import pytz
 import datetime as dt
+import pandas as pd
 
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
@@ -210,6 +211,12 @@ class EuronextClient(MarketDataProvider):
         all_quotes = asyncio.run(fetch_all(isin_mic_period))
 
         return all_quotes
+
+    def get_index_composition(self, isin, mic):
+        url = f'https://live.euronext.com/fr/ajax/getIndexCompositionFull/{isin}-{mic}'
+        resp = self._session.get(url)
+        compo = pd.read_html(resp.text)
+        return compo[0].to_dict(orient='list')
 
     def update_stocks_list(self):
         today = date.today().isoformat()
