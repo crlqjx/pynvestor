@@ -39,7 +39,7 @@ class EuronextClient(MarketDataProvider):
 
     @staticmethod
     def _all_stocks():
-        file_path = os.path.join(current_directory, "static", "Euronext_Equities_2020-10-08.json")
+        file_path = os.path.join(current_directory, "static", "Euronext_Equities_2020-12-18.json")
         with open(file_path, 'r') as f:
             data = json.load(f)
             stocks_data = data['aaData']
@@ -85,6 +85,15 @@ class EuronextClient(MarketDataProvider):
         }
         return transco.get(mic)
 
+    @staticmethod
+    def get_exch_code_from_trading_location(trading_location):
+        transco = {
+            'EURONEXT PARIS': 'XPAR',
+            'EURONEXT BRUSSELS': 'XBRU',
+            'EURONEXT AMSTERDAM': 'XAMS'
+        }
+        return transco.get(trading_location)
+
     @logger
     def search_in_euronext(self, query):
         url = f"https://live.euronext.com/fr/instrumentSearch/searchJSON?q={query}"
@@ -95,7 +104,9 @@ class EuronextClient(MarketDataProvider):
         return result
 
     def get_mic_from_isin(self, isin):
-        return self.isin_to_mic.get(isin)
+        mic = self.isin_to_mic.get(isin)
+        assert mic is not None, f'Could not find mic from isin {isin}, update stocks list'
+        return mic
 
     @logger
     def get_instrument_details(self, isin, mic=None):
