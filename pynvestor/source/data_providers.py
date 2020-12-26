@@ -105,7 +105,6 @@ class EuronextClient(MarketDataProvider):
 
     def get_mic_from_isin(self, isin):
         mic = self.isin_to_mic.get(isin)
-        assert mic is not None, f'Could not find mic from isin {isin}, update stocks list'
         return mic
 
     @logger
