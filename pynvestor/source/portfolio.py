@@ -43,6 +43,7 @@ class Portfolio:
         names = {}
         perf_since_open = {}
         perf_since_last_close = {}
+        prev_session_prices = {}
         for position in self._positions:
             if position.asset_type is not AssetType.CASH:
                 isin = position.isin
@@ -68,10 +69,13 @@ class Portfolio:
                         perf_since_last_close[isin] = float(perf['var'])
                         break
                 price_open = float(euronext_data['currInstrSess']['openPx'])
+                prev_sess_close = float(euronext_data['prevInstrSess']['lastPx'])
+                prev_session_prices[isin] = prev_sess_close
                 perf_since_open[isin] = price / price_open - 1
 
         self._stocks_details = instrument_details
         self._stocks_prices = prices
+        self._previous_prices = prev_session_prices
         self._stocks_names = names
         self._stocks_perf_since_open = perf_since_open
         self._stocks_perf_since_last_close = perf_since_last_close
@@ -143,7 +147,9 @@ class Portfolio:
                                                          'transactions',
                                                          projection={"_id": 0},
                                                          sort=[('transaction_date', 1)],
-                                                         **{'isin': isin, 'transaction_type': {"$in": ['BUY', 'SELL', 'STOCK SPLIT']}}))
+                                                         **{'isin': isin,
+                                                            'transaction_type':
+                                                                {"$in": ['BUY', 'SELL', 'STOCK SPLIT']}}))
                 cumulative_positions = []
                 cum_position = 0
                 for trade in transactions:
@@ -176,6 +182,16 @@ class Portfolio:
         df_assets = DataFrame(asset_values).set_index('date')
         df_assets['navs'] = df_assets['assets'] / df_assets['shares']
         self._portfolio_navs = df_assets['navs']
+        return True
+
+    def _compute_portfolio_performance(self):
+        perf = 0.0
+        for isin, mkt_value in self._stocks_market_values.items():
+            previous_price = self._previous_prices[isin]
+            weight = self.stocks_quantities[isin] * previous_price / self._previous_portfolio_market_value
+            perf += self._stocks_perf_since_last_close[isin] * weight
+
+        self._portfolio_perf = perf
         return True
 
     def _compute_portfolio_returns(self):
@@ -233,20 +249,24 @@ class Portfolio:
         method to launch to get all the portfolio data
         :return:
         """
-
         market_values = {}
+        previous_market_values = {}
         self._portfolio_market_value = self._cash
+        self._previous_portfolio_market_value = self._cash
         for isin, quantity in self._stocks_quantities.items():
             price = self._stocks_prices[isin]
+            previous_price = self._previous_prices[isin]
             market_values[isin] = price * quantity
+            previous_market_values[isin] = previous_price * quantity
             self._portfolio_market_value += market_values[isin]
-
+            self._previous_portfolio_market_value += previous_market_values[isin]
         self._stocks_market_values = market_values
 
         self._get_weights()
         self._compute_positions_pnl()
         self._compute_portfolio_navs()
         self._compute_portfolio_returns()
+        self._compute_portfolio_performance()
         return True
 
     @property
@@ -300,6 +320,10 @@ class Portfolio:
     @property
     def stocks_perf_since_open(self):
         return self._stocks_perf_since_open
+
+    @property
+    def portfolio_perf(self):
+        return self._portfolio_perf
 
     @property
     def stocks_perf_since_last_close(self):

@@ -5,7 +5,12 @@
 <div id="portfolio_chart"></div>
 
 <p>Portfolio as of {{ ptf_date }}</p>
-<p>Portfolio Value: {{ ptf.portfolio_market_value|round(2) }}</p>
+{% if ptf.portfolio_perf >= 0 %}
+    <p>Portfolio Value: {{ ptf.portfolio_market_value|round(2) }} (+{{ ptf.portfolio_perf|round(4) * 100 }}%)</p>
+{% else %}
+    <p>Portfolio Value: {{ ptf.portfolio_market_value|round(2) }} ({{ ptf.portfolio_perf|round(4) * 100 }}%)</p>
+{% endif %}
+
 
 <div class="table-responsive text-nowrap">
     <table class="table table-striped" id="portfolio_table">
