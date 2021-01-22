@@ -38,8 +38,15 @@
 <body>
 
 {% block body %}
-<h1>Main Area</h1>
-<p>Some data</p>
+<h1>Indices</h1>
+{% for i in indices %}
+    {% set perf = ((i["currInstrSess"]["lastPx"]|float / i["prevInstrSess"]["lastPx"]|float - 1) * 100)|round(2) %}
+    {% if perf < 0 %}
+        <p>{{ i["longNm"] }}: {{ i["currInstrSess"]["lastPx"]|float }} ({{ perf }}%)</p>
+    {% else %}
+        <p>{{ i["longNm"] }}: {{ i["currInstrSess"]["lastPx"]|float }} (+{{ perf }}%)</p>
+    {% endif %}
+{% endfor %}
 {% endblock %}
 
 

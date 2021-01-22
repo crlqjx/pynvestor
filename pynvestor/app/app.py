@@ -3,6 +3,7 @@ from pynvestor.source.portfolio import Portfolio
 from pynvestor.source.risk import PortfolioRiskManager
 from pynvestor.source.screener import Screener
 from pynvestor.source.chart import StockChart, PortfolioChart, ValueAtRiskChart
+from pynvestor.source import euronext
 
 import numpy as np
 import datetime as dt
@@ -31,7 +32,14 @@ app = create_app()
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    # TODO: find a way to format automatically the templates (Javascript?)
+    indices = euronext.get_instruments_details([
+        ('FR0003500008', 'XPAR'),  # CAC 40
+        ('FR0003999499', 'XPAR'),  # CAC All Tradable
+        ('FR0003502079', 'XPAR')   # Euronext 100
+    ])
+    indices = [list(i.values())[0] for i in indices]
+    return render_template('index.html', indices=indices)
 
 
 @app.route('/portfolio')
