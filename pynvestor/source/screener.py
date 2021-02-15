@@ -158,6 +158,7 @@ class Screener:
         self._df_screener['operating_margin'] = self._df_screener['operating_income'] / self._df_screener['revenue']
         return True
 
+    @logger
     def run(self):
         results_df = {}
         for screen_name, (lower_limit, upper_limit) in list(self.screen_filters.items()):
