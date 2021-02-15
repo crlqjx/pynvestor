@@ -158,6 +158,7 @@ class PortfolioChart(Chart):
             perf *= (1 + r)
             perfs.append(perf)
         chart_data['reference_index_base100'] = perfs
+        assert not chart_data.isna().any().any()  # Assert there is no NA value
 
         dates = [d.timestamp() * 1000 for d in chart_data.index]
         reference_index = [[d, index_base100] for d, index_base100 in
@@ -178,7 +179,9 @@ class PortfolioChart(Chart):
                                  'navigator': {'enabled': False},
                                  'scrollbar': {'enabled': False},
                                  'title': {'text': self.title},
-                                 'series': highcharts_data}
+                                 'series': highcharts_data,
+                                 'yAxis': {'offset': 30}
+                                 }
 
         self._highcharts_parameters = highcharts_parameters
 
@@ -263,4 +266,3 @@ class ValueAtRiskChart:
     @property
     def highcharts_parameters(self):
         return self._highcharts_parameters
-
