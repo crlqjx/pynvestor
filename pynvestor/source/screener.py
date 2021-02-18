@@ -1,4 +1,7 @@
 import pandas as pd
+import datetime as dt
+
+from typing import Dict
 
 from pynvestor.source import euronext, mongo
 from pynvestor.source.data_providers import ReutersClient
@@ -10,7 +13,14 @@ helpers = Helpers()
 
 
 class Screener:
-    def __init__(self, screen_filters, period, as_of_date=None):
+    def __init__(self, screen_filters: Dict, period: str, as_of_date: dt.date = None):
+        """
+        Class to screen stocks from fundamental data stored in the database
+        :param screen_filters: dictionary with metric name as key and 2 element list representing the upper
+        and lower limits
+        :param period: interim or annual
+        :param as_of_date: date of the metrics
+        """
         self._period = period
         self._date = as_of_date
         self._df_screener = pd.DataFrame()
@@ -19,9 +29,8 @@ class Screener:
             assert screen_filter in available_screen_filters, f'{screen_filter} must be in {available_screen_filters}'
         self.screen_filters = screen_filters
 
-    @staticmethod
     @logger
-    def _get_data(statement, report_elem, period):
+    def _get_data(self, statement: str, report_elem: str, period: str):
         """
         get financial data from mongo
         :param statement: "income", "balance_sheet", "cash_flow"
@@ -29,7 +38,8 @@ class Screener:
         :param period: annual or interim
         :return: dataframe
         """
-        pipeline = [{"$match": {"report_elem": report_elem, "period": period}},
+        report_date = dt.datetime.today() if self._date is None else self._date
+        pipeline = [{"$match": {"report_elem": report_elem, "period": period, "date": {"$lte": report_date}}},
                     {"$sort": {"ric": 1, "date": -1}},
                     {"$group": {"_id": {"ric": "$ric", "report_elem": "$report_elem"},
                                 "ric": {"$first": "$ric"},
@@ -78,7 +88,7 @@ class Screener:
                 self._df_screener['price'] = self._df_screener['isin'].apply(
                     lambda x: helpers.get_last_price_in_mongo(x))
             else:
-                self._df_screener['last_price'] = self._df_screener['isin'].apply(
+                self._df_screener['price'] = self._df_screener['isin'].apply(
                     lambda x: helpers.get_price_from_mongo(x, self._date))
 
     @logger
@@ -109,6 +119,7 @@ class Screener:
             self._compute_eps()
 
         # Compute PER
+        self._df_screener['eps'].replace(0.0, None, inplace=True)  # To avoir zero division error
         self._df_screener['per'] = self._df_screener['price'] / self._df_screener['eps']
         return True
 
