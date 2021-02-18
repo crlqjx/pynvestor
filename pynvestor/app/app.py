@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from pynvestor.source.portfolio import Portfolio
 from pynvestor.source.risk import PortfolioRiskManager
 from pynvestor.source.screener import Screener
@@ -9,6 +9,9 @@ import numpy as np
 import datetime as dt
 import json
 
+# TODO: find a way to format automatically performances
+# TODO: put frames to regroup elements (market news, indices levels, ...)
+
 
 class JsonEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -18,6 +21,8 @@ class JsonEncoder(json.JSONEncoder):
             return float(obj)
         elif isinstance(obj, np.ndarray):
             return obj.tolist()
+        elif isinstance(obj, (dt.date, dt.datetime)):
+            return obj.isoformat()
         else:
             return super(JsonEncoder, self).default(obj)
 
@@ -28,11 +33,11 @@ def create_app():
 
 
 app = create_app()
+app.json_encoder = JsonEncoder
 
 
 @app.route('/')
 def index():
-    # TODO: find a way to format automatically the templates (Javascript?)
     indices = euronext.get_instruments_details([
         ('FR0003500008', 'XPAR'),  # CAC 40
         ('FR0003999499', 'XPAR'),  # CAC All Tradable
@@ -60,7 +65,7 @@ def portfolio():
                            df=df_ptf,
                            ptf=ptf,
                            ptf_date=ptf_date,
-                           ptf_chart_params=json.dumps(ptf_chart.highcharts_parameters, cls=JsonEncoder))
+                           ptf_chart_params=json.dumps(ptf_chart.highcharts_parameters))
 
 
 @app.route('/risk')
@@ -77,21 +82,30 @@ def risk_management():
                            var_chart_params=json.dumps(var_chart.highcharts_parameters, cls=JsonEncoder))
 
 
-@app.route('/run_screener')
-def run_screener():
-    return
-
-
 @app.route('/screener')
 def screener():
-    equity_screener = Screener({'eps': (0, 100),
-                                'per': (0, 15),
-                                'roe': (0.10, 1),
-                                'gearing': (0, 1),
-                                'operating_margin': (0.05, 10)},
-                               period='interim')
-    screener_result = equity_screener.run()
-    return render_template('screener.html', df=screener_result)
+    return render_template('screener.html')
+
+
+@app.route('/run_screener', methods=['POST'])
+def run_screener():
+    screening_data = request.json
+    period = screening_data['period']
+    fields_filters = screening_data['fields']
+    equity_screener = Screener(fields_filters, period=period)
+    df_screener_result = equity_screener.run()
+    df_screener_result['date'] = df_screener_result['date'].dt.date
+    columns_definition = [{'field': col} if col != 'isin' else {'field': col, 'cellRenderer': 'isinCellRenderer'}
+                          for col in list(df_screener_result.columns)]
+    row_data = df_screener_result.to_dict(orient='records')
+    options = {'defaultColDef': {'resizable': True,
+                                 'sortable': True},
+               'domLayout': 'autoHeight'}
+
+    result = {'columnDefs': columns_definition}
+    result.update({'rowData': row_data})
+    result.update(options)
+    return json.dumps(result, cls=JsonEncoder)
 
 
 @app.route('/chart')
