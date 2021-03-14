@@ -1,24 +1,33 @@
 import datetime as dt
+from typing import List
+
+from pandas import DataFrame, Series
+
+from pynvestor.models.asset_type import AssetType
+from pynvestor.models.position import Position
 from pynvestor.source import euronext, mongo
 from pynvestor.source.helpers import Helpers
-from pynvestor.models.position import Position
-from pynvestor.models.asset_type import AssetType
-from pandas import DataFrame, Series
-from typing import List
 
 
 class Portfolio:
+    """
+    Object representing a portfolio at a certain date
+    """
     def __init__(self, portfolio_date: dt.datetime = None):
+        """
+        Initialize portfolio at a certain date
+        :param portfolio_date: datetime
+        """
         self._portfolio_date = portfolio_date
         self._helpers = Helpers()
         self._load_portfolio_positions()
         self._get_euronext_data()
         self._compute()
 
-    def _load_portfolio_positions(self):
+    def _load_portfolio_positions(self) -> bool:
         """
         method to load and store the portfolio positions
-        :return:
+        :return: True
         """
         self._positions = self._get_portfolio_positions_as_of(at_date=self._portfolio_date)
 
@@ -33,10 +42,10 @@ class Portfolio:
         assert self._stocks_quantities is not None, 'Could not retrieve quantities'
         return True
 
-    def _get_euronext_data(self):
+    def _get_euronext_data(self) -> bool:
         """
-        method to get market data from euronext
-        :return:
+        method that will get and store market data from euronext
+        :return: True
         """
         instrument_details = {}
         prices = {}
@@ -82,11 +91,11 @@ class Portfolio:
         return True
 
     @staticmethod
-    def _get_cash_balance_as_of(at_date: dt.datetime = None):
+    def get_cash_balance_as_of(at_date: dt.datetime = None) -> Position:
         """
-        method to get the cash balance from transactions
+        method to get the cash balance from transactions at a certain date
         :param at_date: datetime
-        :return: float
+        :return: Position object
         """
 
         if at_date is None:
@@ -101,7 +110,12 @@ class Portfolio:
         return Position(**{'asset_type': 'CASH', 'quantity': cash_balance})
 
     @staticmethod
-    def _get_equity_positions_as_of(at_date: dt.datetime = None):
+    def get_equity_positions_as_of(at_date: dt.datetime = None) -> List[Position]:
+        """
+        method to get equity positions at a certain date
+        :param at_date: datetime
+        :return: list of equity position objects
+        """
         if at_date is None:
             at_date = dt.datetime.today()
 
@@ -122,13 +136,18 @@ class Portfolio:
 
         return result
 
-    def _get_portfolio_positions_as_of(self, at_date: dt.datetime = None):
-        return self._get_equity_positions_as_of(at_date) + [self._get_cash_balance_as_of(at_date)]
+    def _get_portfolio_positions_as_of(self, at_date: dt.datetime = None) -> List[Position]:
+        """
+        Private method to get equity and cash positions at a certain date
+        :param at_date: datetime
+        :return: list of Position objects
+        """
+        return self.get_equity_positions_as_of(at_date) + [self.get_cash_balance_as_of(at_date)]
 
-    def _get_weights(self):
+    def _get_weights(self) -> bool:
         """
         method to get and store assets weights
-        :return:
+        :return: True
         """
         weights = {}
         for isin, market_value in self._stocks_market_values.items():
@@ -138,7 +157,11 @@ class Portfolio:
         self._cash_weight = self._cash / self._portfolio_market_value
         return True
 
-    def _compute_positions_pnl(self):
+    def _compute_positions_pnl(self) -> bool:
+        """
+        Compute and store PnL from equity positions
+        :return: True
+        """
         positions_pnl = {}
         for position in self._positions:
             if position.asset_type is AssetType.EQUITY:
@@ -171,10 +194,10 @@ class Portfolio:
         self._positions_pnl = positions_pnl
         return True
 
-    def _compute_portfolio_navs(self):
+    def _compute_portfolio_navs(self) -> bool:
         """
         method to compute the portfolio net asset values
-        :return:
+        :return: bool
         """
         asset_values = mongo.find_documents(database_name='net_asset_values', collection_name='net_asset_values',
                                             projection={'_id': 0})
@@ -184,7 +207,11 @@ class Portfolio:
         self._portfolio_navs = df_assets['navs']
         return True
 
-    def _compute_portfolio_performance(self):
+    def _compute_portfolio_performance(self) -> bool:
+        """
+        Compute and store portfolio performances
+        :return: True
+        """
         perf = 0.0
         for isin, mkt_value in self._stocks_market_values.items():
             previous_price = self._previous_prices[isin]
@@ -203,17 +230,22 @@ class Portfolio:
         return True
 
     @staticmethod
-    def add_transaction(transaction: List[dict]):
+    def add_transaction(transaction: List[dict]) -> bool:
+        """
+        insert transactions in mongo
+        :param transaction: list of transactions in a json format
+        :return: True
+        """
         mongo.insert_documents(database_name='transactions', collection_name='transactions', documents=transaction)
         return True
 
-    def save_portfolio_nav(self, nav_date, shares=None, cashflows=0.0):
+    def save_portfolio_nav(self, nav_date, shares=None, cashflows=0.0) -> bool:
         """
         method to insert new net asset values in the mongo
         :param nav_date: date the net asset value
         :param shares: new total amount of shares, if no cashflows, leave it to None
         :param cashflows: amount of cashflows
-        :return:
+        :return: True
         """
         if shares is None:
             shares = mongo.find_document('net_asset_values', 'net_asset_values', [("date", -1)])['shares']
@@ -229,7 +261,7 @@ class Portfolio:
         mongo.insert_documents('net_asset_values', 'net_asset_values', [data])
         return True
 
-    def to_df(self):
+    def to_df(self) -> DataFrame:
         """
         method to get a dataframe representation of the portfolio data
         :return: dataframe
@@ -244,10 +276,10 @@ class Portfolio:
 
         return df
 
-    def _compute(self):
+    def _compute(self) -> bool:
         """
         method to launch to get all the portfolio data
-        :return:
+        :return: True
         """
         market_values = {}
         previous_market_values = {}
