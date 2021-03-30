@@ -1,56 +1,71 @@
 {% extends "index.html" %}
 {% block body %}
 
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-4">
+            <div class="card">
+                <div class="card-body">
+                    <div id="portfolio_chart"></div>
+                </div>
+            </div>
+        </div>
 
-<div id="portfolio_chart"></div>
-
-<p>Portfolio as of {{ ptf_date }}</p>
-{% if ptf.portfolio_perf >= 0 %}
-    <p>Portfolio Value: {{ ptf.portfolio_market_value|round(2) }} (+{{ ptf.portfolio_perf|round(4) * 100 }}%)</p>
-{% else %}
-    <p>Portfolio Value: {{ ptf.portfolio_market_value|round(2) }} ({{ ptf.portfolio_perf|round(4) * 100 }}%)</p>
-{% endif %}
-
-
-<div class="table-responsive text-nowrap">
-    <table class="table table-striped" id="portfolio_table">
-        <thead>
-            <tr>
-                {% for col_name in df.columns %}
-                <th scope="col">{{ col_name|replace("_", " ") }}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for key, value in df.iterrows() %}
-            <tr>
-                {% for v in value %}
-                    {% if df.columns[loop.index - 1] == "isin" %}
-                    <td><a href="/chart?isin={{v}}" target="_blank"> {{ v }} </a></td>
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <p>Portfolio as of {{ ptf_date }}</p>
+                    {% if ptf.portfolio_perf >= 0 %}
+                    <p>Portfolio Value: {{ ptf.portfolio_market_value|round(2) }} (+{{ ptf.portfolio_perf|round(4) * 100
+                        }}%)</p>
                     {% else %}
-                    <td>{{ v }}</td>
+                    <p>Portfolio Value: {{ ptf.portfolio_market_value|round(2) }} ({{ ptf.portfolio_perf|round(4) * 100
+                        }}%)</p>
                     {% endif %}
-                {% endfor %}
-            </tr>
-            {% endfor %}
-        </tbody>
-        <tfoot>
-            <td></td>
-            <td><b>CASH</b></td>
-            <td></td>
-            <td>{{ (ptf.cash_weight * 100)|round(2) }}%</td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td>{{ ptf.cash|round(2) }}</td>
-            <td></td>
-        </tfoot>
-    </table>
+
+
+                    <div class="table-responsive text-nowrap">
+                        <table class="table table-striped" id="portfolio_table">
+                            <thead>
+                            <tr>
+                                {% for col_name in df.columns %}
+                                <th scope="col">{{ col_name|replace("_", " ") }}</th>
+                                {% endfor %}
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for key, value in df.iterrows() %}
+                            <tr>
+                                {% for v in value %}
+                                {% if df.columns[loop.index - 1] == "isin" %}
+                                <td><a href="/chart?isin={{v}}" target="_blank"> {{ v }} </a></td>
+                                {% else %}
+                                <td>{{ v }}</td>
+                                {% endif %}
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                            <tfoot>
+                            <td></td>
+                            <td><b>CASH</b></td>
+                            <td></td>
+                            <td>{{ (ptf.cash_weight * 100)|round(2) }}%</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td>{{ ptf.cash|round(2) }}</td>
+                            <td></td>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-
-
-<script>
+    <script>
 <!--    formatting script-->
 
     var table = document.getElementById("portfolio_table")
@@ -79,17 +94,31 @@
             }
         };
 
-</script>
 
-<script type="text/javascript" src="https://code.highcharts.com/stock/highstock.js"></script>
-<script type="text/javascript" src="https://code.highcharts.com/stock/modules/data.js"></script>
-<script type="text/javascript" src="https://code.highcharts.com/stock/modules/exporting.js"></script>
-<script type="text/javascript" src="https://code.highcharts.com/stock/modules/export-data.js"></script>
-<script type="text/javascript" src="/static/js/highcharts.js"></script>
-<script>
+
+
+
+
+
+
+    </script>
+
+    <script type="text/javascript" src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script type="text/javascript" src="https://code.highcharts.com/stock/modules/data.js"></script>
+    <script type="text/javascript" src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+    <script type="text/javascript" src="https://code.highcharts.com/stock/modules/export-data.js"></script>
+    <script type="text/javascript" src="/static/js/highcharts.js"></script>
+    <script>
     var ptf_chart_params = {{ ptf_chart_params|safe }}
     stockChart("portfolio_chart", ptf_chart_params)
-</script>
 
 
-{% endblock %}
+
+
+
+
+
+    </script>
+
+
+    {% endblock %}

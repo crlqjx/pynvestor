@@ -1,0 +1,9 @@
+body { background-color: #292b2c; color : #dbdbdb}
+a { color: #dbdbdb}
+
+
+.nav-item:hover {
+  color: #292b2c;
+  background-color: #ffdf00;
+}
+
