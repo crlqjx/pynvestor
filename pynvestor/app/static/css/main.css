@@ -1,9 +1,13 @@
 body { background-color: #292b2c; color : #dbdbdb}
 a { color: #dbdbdb}
 
+.row { margin-bottom: 10px}
 
 .nav-item:hover {
   color: #292b2c;
   background-color: #ffdf00;
 }
 
+.card {
+    background-color: #2d2f30;
+}

@@ -43,34 +43,36 @@
     </div>
 
     <div class="row">
-        <div class="card">
-            <div class="card-body">
-                <div class="table-responsive text-nowrap">
-                    <table class="table table-striped" id="correlationMatrix">
-                        <thead>
-                        <thead>
-                        <tr>
-                            <th colspan="{{ names|length + 1 }}" style="text-align:center">Correlation Matrix</th>
-                        </tr>
-                        </thead>
-                        <tr>
-                            <td></td>
-                            {% for stock_name in names %}
-                            <th scope="col">{{ stock_name }}</th>
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive text-nowrap">
+                        <table class="table table-striped" id="correlationMatrix">
+                            <thead>
+                            <thead>
+                            <tr>
+                                <th colspan="{{ names|length + 1 }}" style="text-align:center">Correlation Matrix</th>
+                            </tr>
+                            </thead>
+                            <tr>
+                                <td></td>
+                                {% for stock_name in names %}
+                                <th scope="col">{{ stock_name }}</th>
+                                {% endfor %}
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for row in correlation_matrix %}
+                            <tr>
+                                <th>{{ names[loop.index - 1] }}</th>
+                                {% for elem in row %}
+                                <td>{{ elem|round(2) }}</td>
+                                {% endfor %}
+                            </tr>
                             {% endfor %}
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for row in correlation_matrix %}
-                        <tr>
-                            <th>{{ names[loop.index - 1] }}</th>
-                            {% for elem in row %}
-                            <td>{{ elem|round(2) }}</td>
-                            {% endfor %}
-                        </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -86,6 +88,7 @@
 <script>
     var var_chart_params = {{ var_chart_params|safe }}
     chart("var_chart", var_chart_params)
+
 
 
 
