@@ -1,5 +1,6 @@
 import datetime as dt
 import json
+import threading
 
 from pathlib import Path
 from requests.exceptions import HTTPError
@@ -8,20 +9,20 @@ from pynvestor.source import mongo, euronext, reuters
 
 
 @logger
-def update_stocks_quotes():
+def update_stocks_quotes(is_async: bool = True) -> True:
     filtered_stocks = [(stock['isin'], stock['mic'], 'max')
-                       for stock in euronext.all_stocks if stock['mic'] in ['XPAR', 'ALXP']]
-    all_quotes = euronext.get_quotes(filtered_stocks, asynchronously=True)
+                       for stock in euronext.all_stocks if stock['mic'] in ['XPAR', 'ALXP', 'XBRU']]
+    all_quotes = euronext.get_quotes(filtered_stocks, asynchronously=is_async)
     quotes = [quote for quotes in all_quotes for quote in quotes]  # List flatten
     mongo.insert_documents('quotes', 'equities', quotes)
     return True
 
 
 @logger
-def update_indices_quotes():
+def update_indices_quotes(is_async: bool = True) -> True:
     filtered_indices = [(stock_index['isin'], stock_index['mic'], 'max')
-                        for stock_index in euronext.all_indices if stock_index['mic'] in ['XPAR', 'ALXP']]
-    all_quotes = euronext.get_quotes(filtered_indices, asynchronously=True)
+                        for stock_index in euronext .all_indices if stock_index['mic'] in ['XPAR', 'ALXP', 'XBRU']]
+    all_quotes = euronext.get_quotes(filtered_indices, asynchronously=is_async)
     quotes = [quote for quotes in all_quotes for quote in quotes]  # List flatten
     mongo.insert_documents('quotes', 'equities', quotes)
     return True
@@ -30,9 +31,11 @@ def update_indices_quotes():
 @logger
 def check_quotes():
     quotes = list(mongo.find_documents('quotes', 'equities', **{"time": {'$gt': dt.datetime.today()}}))
+    if len(quotes) > 0:
+        # delete in mongo:
+        mongo.mongo_client.quotes.equities.delete_many({"time": {'$gt': dt.datetime.today()}})
+    quotes = list(mongo.find_documents('quotes', 'equities', **{"time": {'$gt': dt.datetime.today()}}))
     assert len(quotes) == 0
-    # delete in mongo:
-    # mongo.mongo_client.quotes.equities.delete_many({"time": {'$gt': dt.datetime.today()}})
 
 
 @logger
@@ -116,6 +119,26 @@ def get_cash_flow_statement_elements(ric, period, date=None):
 
 
 if __name__ == '__main__':
-    update_stocks_quotes()
-    update_indices_quotes()
-    update_fundamentals()
+    threads = []
+
+    # Create and start thread to update stocks
+    thread_update_stocks = threading.Thread(target=update_stocks_quotes, args=(True,))
+    threads.append(thread_update_stocks)
+    thread_update_stocks.start()
+
+    # Create and start thread to update indices
+    thread_update_indices = threading.Thread(target=update_indices_quotes, args=(True,))
+    threads.append(thread_update_indices)
+    thread_update_indices.start()
+
+    # Create and start thread to update fundamentals
+    thread_update_fundamentals = threading.Thread(target=update_fundamentals)
+    threads.append(thread_update_fundamentals)
+    thread_update_fundamentals.start()
+
+    # Wait for all threads to be finished to run the quote checking
+    for thread in threads:
+        thread.join()
+
+    check_quotes()
+
