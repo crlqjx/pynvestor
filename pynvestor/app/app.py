@@ -2,7 +2,8 @@ from flask import Flask, render_template, request, jsonify
 from pynvestor.source.portfolio import Portfolio
 from pynvestor.source.risk import PortfolioRiskManager
 from pynvestor.source.screener import Screener
-from pynvestor.source.chart import StockChart, PortfolioChart, ValueAtRiskChart
+from pynvestor.source.optimizer import Optimizer
+from pynvestor.source.chart import StockChart, PortfolioChart, ValueAtRiskChart, OptimizerChart
 from pynvestor.source import euronext
 
 import numpy as np
@@ -80,6 +81,57 @@ def risk_management():
                            ptf_sharpe_ratio=risk_manager.portfolio_sharpe_ratio,
                            ptf_value_at_risk=risk_manager.portfolio_value_at_risk,
                            var_chart_params=json.dumps(var_chart.highcharts_parameters, cls=JsonEncoder))
+
+
+@app.route('/optimizer')
+def optimizer():
+    risk_free_rate = 0.01
+    optimizer = Optimizer(risk_free_rate)
+    risky_assets_weight = 1 - optimizer.cash_weight
+    expected_returns = optimizer.mean_returns
+
+    # Global minimum variance portfolio
+    gmv_weigths, gmv_annualized_variance, gmv_expected_return = optimizer.minimum_variance_optimization()
+    gmv_annualized_volatility = np.sqrt(gmv_annualized_variance)
+
+    # Current portfolio optimization
+    weights_opti, var_opti, ptf_return_opti = optimizer.portfolio_optimization()
+    annualized_volatility_opti = np.sqrt(var_opti)
+
+    # Efficient portfolio with a return corresponding to the highest single stock return
+    max_return_stock_index = list(expected_returns).index(max(expected_returns))
+    max_return_stock = max(expected_returns) * risky_assets_weight
+    max_stock_efficient_weights, max_stock_efficient_var, max_stock_efficient_return = \
+        optimizer.minimum_variance_optimization(target_return=max_return_stock)
+    efficient_vol = np.sqrt(max_stock_efficient_var)
+
+    # Optimizing for 100 return points between the global min var portfolio and the max return stock efficient portfolio
+    returns_array = np.linspace(gmv_expected_return, max_stock_efficient_return, 100)
+    efficient_portfolios = [optimizer.minimum_variance_optimization(target_return=r) for r in returns_array]
+
+    efficient_weights, efficient_var, efficient_returns = list(zip(*efficient_portfolios))
+    gmv_portfolio = {'weights': gmv_weigths,
+                     'vol': gmv_annualized_volatility,
+                     'expected_return': gmv_expected_return,
+                     'name': 'Global Minimum Variance'}
+    current_portfolio = {'weights': list(optimizer.stocks_weights.values()),
+                         'vol': optimizer.annualized_portfolio_volatility,
+                         'expected_return': np.dot(np.array(list(optimizer.stocks_weights.values())),
+                                                   optimizer.mean_returns),
+                         'name': 'Current Portfolio'}
+    portfolio_optimized = {'weights': weights_opti,
+                           'vol': annualized_volatility_opti,
+                           'expected_return': ptf_return_opti,
+                           'name': 'Portfolio Optimized'}
+    scatter_points = [gmv_portfolio, current_portfolio, portfolio_optimized]
+    optimizer_chart = OptimizerChart(efficient_weights=efficient_weights,
+                                     vol_data=list(np.sqrt(efficient_var)),
+                                     expected_return_data=efficient_returns,
+                                     scatter_points=scatter_points,
+                                     title='Efficient Frontier')
+
+    return render_template('optimizer.html',
+                           optimizer_chart_params=json.dumps(optimizer_chart.highcharts_parameters, cls=JsonEncoder))
 
 
 @app.route('/screener')

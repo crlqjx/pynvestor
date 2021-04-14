@@ -1,0 +1,25 @@
+{% extends "index.html" %}
+
+{% block body %}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="card">
+            <div class="card-body">
+                <div id="optimizer_chart"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="https://code.highcharts.com/stock/highstock.js"></script>
+<script type="text/javascript" src="https://code.highcharts.com/stock/modules/data.js"></script>
+<script type="text/javascript" src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+<script type="text/javascript" src="https://code.highcharts.com/stock/modules/export-data.js"></script>
+<script type="text/javascript" src="/static/js/highcharts.js"></script>
+<script>
+    var optimizer_chart_params = {{ optimizer_chart_params|safe }}
+    chart("optimizer_chart", optimizer_chart_params)
+</script>
+
+{% endblock %}

@@ -132,6 +132,10 @@ class PortfolioRiskManager(Portfolio):
         return self._lookback_days
 
     @property
+    def mean_returns(self):
+        return self._mean_returns
+
+    @property
     def assets_std(self):
         return self._assets_std
 

@@ -276,3 +276,55 @@ class ValueAtRiskChart(Chart):
     @property
     def highcharts_parameters(self):
         return self._highcharts_parameters
+
+
+class OptimizerChart:
+    def __init__(self, vol_data, expected_return_data, efficient_weights, scatter_points, title=None):
+        super().__init__()
+        self._title = title
+        self._vol_data = vol_data
+        self._expected_return_data = expected_return_data
+        self._efficient_weights = efficient_weights
+        self._scatter_points = scatter_points
+
+        self._get_data()
+
+    def _get_data(self):
+        line_data = [[vol, r] for vol, r in zip(self._vol_data, self._expected_return_data)]
+        scatter_data = [{'name': d.get('name'),
+                         'x': d.get('vol'),
+                         'y': d.get('expected_return')} for d in self._scatter_points]
+
+        highcharts_params = {
+            'chart': {
+                'type': 'spline',
+                'zoomType': 'x'
+            },
+            'title': {
+                'text': self._title
+            },
+            'series': [
+                {
+                    'type': 'line',
+                    'name': 'Efficient Frontier',
+                    'data': line_data
+                },
+                {
+                    'type': 'scatter',
+                    'tooltip': {
+                        'headerFormat': '<strong>{point.key}</strong><br>'
+                    },
+                    'data': scatter_data
+                }
+            ]
+        }
+
+        self._highcharts_parameters = highcharts_params
+
+    @property
+    def highcharts_parameters(self):
+        return self._highcharts_parameters
+
+
+def highcharts_parameters(self):
+    return self._highcharts_parameters
