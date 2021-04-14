@@ -39,7 +39,7 @@ class EuronextClient(MarketDataProvider):
 
     @staticmethod
     def _all_stocks():
-        file_path = os.path.join(current_directory, "static", "Euronext_Equities_2020-12-18.json")
+        file_path = os.path.join(current_directory, "static", "Euronext_Equities_2021-03-29.json")
         with open(file_path, 'r') as f:
             data = json.load(f)
             stocks_data = data['aaData']

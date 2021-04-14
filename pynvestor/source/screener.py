@@ -32,7 +32,7 @@ class Screener:
     @logger
     def _get_data(self, statement: str, report_elem: str, period: str):
         """
-        get financial data from mongo
+        get financial data from mongo of all stocks
         :param statement: "income", "balance_sheet", "cash_flow"
         :param report_elem: name of the report element in mongo
         :param period: annual or interim
@@ -73,7 +73,7 @@ class Screener:
                         shares_outstanding[isin] = int(details.get('nbShare'))
                         names[isin] = details.get('longNm')
                         if details.get('instrRel') is not None:
-                            subsectors[isin] = details.get('instrRel')[3].get('instrLst').get('lstLbl')
+                            subsectors[isin] = details.get('instrRel')[3].get('instrLst').get('lstLbl').strip()
                         else:
                             subsectors[isin] = None
 
