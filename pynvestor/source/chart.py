@@ -14,6 +14,11 @@ class Chart:
     def _get_data(self):
         pass
 
+    @property
+    @abc.abstractmethod
+    def highcharts_parameters(self):
+        pass
+
 
 class StockChart(Chart):
     def __init__(self, isin):
@@ -58,7 +63,7 @@ class StockChart(Chart):
         ohlc = [[d, o, h, l, c] for d, o, h, l, c in zip(dates, stock_open, stock_high, stock_low, stock_close)]
         volume = [{'x': d, 'y': v, 'color': c} for (d, v, c) in zip(dates, stock_volume, volume_colors)]
 
-        highcharts_parameters = {
+        highcharts_params = {
             'series': [
                 {
                     'type': 'candlestick',
@@ -130,9 +135,13 @@ class StockChart(Chart):
             }
         }
 
-        self.highcharts_parameters = highcharts_parameters
+        self._highcharts_parameters = highcharts_params
 
         return True
+
+    @property
+    def highcharts_parameters(self):
+        return self._highcharts_parameters
 
 
 class PortfolioChart(Chart):
@@ -175,15 +184,15 @@ class PortfolioChart(Chart):
                             'tooltip': {'valueDecimals': 2},
                             'color': '#ffdf00'}]
 
-        highcharts_parameters = {'rangeSelector': {'selected': 5},
-                                 'navigator': {'enabled': False},
-                                 'scrollbar': {'enabled': False},
-                                 'title': {'text': self.title},
-                                 'series': highcharts_data,
-                                 'yAxis': {'offset': 30}
-                                 }
+        highcharts_params = {'rangeSelector': {'selected': 5},
+                             'navigator': {'enabled': False},
+                             'scrollbar': {'enabled': False},
+                             'title': {'text': self.title},
+                             'series': highcharts_data,
+                             'yAxis': {'offset': 30},
+                             }
 
-        self._highcharts_parameters = highcharts_parameters
+        self._highcharts_parameters = highcharts_params
 
         return True
 
@@ -192,8 +201,9 @@ class PortfolioChart(Chart):
         return self._highcharts_parameters
 
 
-class ValueAtRiskChart:
+class ValueAtRiskChart(Chart):
     def __init__(self, losses, values_at_risk, value_at_risk):
+        super().__init__()
         self._losses = losses
         self._values_at_risk = values_at_risk
         self._value_at_risk = value_at_risk
@@ -214,7 +224,7 @@ class ValueAtRiskChart:
             if lb < self._value_at_risk < ub:
                 var_position = idx + (self._value_at_risk - lb) / bin_size - 0.5
 
-        highcharts_parameters = {
+        highcharts_params = {
             'chart': {'zoomType': 'x'},
             'title': {'text': 'Value At Risk 95%'},
             'plotOptions': {
@@ -259,7 +269,7 @@ class ValueAtRiskChart:
                 }
             ]
         }
-        self._highcharts_parameters = highcharts_parameters
+        self._highcharts_parameters = highcharts_params
 
         return True
 
