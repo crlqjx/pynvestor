@@ -30,13 +30,14 @@
 <script type="text/javascript" src="https://code.highcharts.com/modules/price-indicator.js"></script>
 <script type="text/javascript" src="https://code.highcharts.com/modules/full-screen.js"></script>
 <script type="text/javascript" src="https://code.highcharts.com/modules/stock-tools.js"></script>
-<script type="text/javascript" src="/static/js/highcharts.js"></script>
-<script>
-    var stock_chart_params = {{ stock_chart_params|safe }}
-    stockChart("stock_chart", stock_chart_params)
-
-
-
+<script type="module" src="/static/js/highcharts/chart_parameters/stock_params.js"></script>
+<script type="module">
+    import { stockChart } from '/static/js/highcharts/stock_chart.js'
+    var stockName = "{{ stock_name }}"
+    var chartTitle = "{{ chart_title }}"
+    var ohlcData = {{ ohlc_data|safe }}
+    var volumeData = {{ volume_data|safe }}
+    stockChart("stock_chart", stockName, chartTitle, ohlcData, volumeData)
 </script>
 
 {% endblock %}

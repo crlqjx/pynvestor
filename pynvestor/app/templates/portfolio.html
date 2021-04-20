@@ -107,11 +107,12 @@
 <script type="text/javascript" src="https://code.highcharts.com/stock/modules/data.js"></script>
 <script type="text/javascript" src="https://code.highcharts.com/stock/modules/exporting.js"></script>
 <script type="text/javascript" src="https://code.highcharts.com/stock/modules/export-data.js"></script>
-<script type="text/javascript" src="/static/js/highcharts.js"></script>
-<script>
-var ptf_chart_params = {{ ptf_chart_params|safe }}
-stockChart("portfolio_chart", ptf_chart_params)
+<script type="module" src="/static/js/highcharts/chart_parameters/portfolio_params.js"></script>
+<script type="module">
+    import { portfolioChart } from '/static/js/highcharts/portfolio_chart.js'
+    var ptfChartData = {{ ptf_chart_data|safe }}
+    var chartTitle = "{{ chart_title }}"
+    portfolioChart("portfolio_chart", chartTitle, ptfChartData)
 </script>
 
-
-    {% endblock %}
+{% endblock %}

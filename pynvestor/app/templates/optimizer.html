@@ -16,10 +16,12 @@
 <script type="text/javascript" src="https://code.highcharts.com/stock/modules/data.js"></script>
 <script type="text/javascript" src="https://code.highcharts.com/stock/modules/exporting.js"></script>
 <script type="text/javascript" src="https://code.highcharts.com/stock/modules/export-data.js"></script>
-<script type="text/javascript" src="/static/js/highcharts.js"></script>
-<script>
-    var optimizer_chart_params = {{ optimizer_chart_params|safe }}
-    chart("optimizer_chart", optimizer_chart_params)
+<script type="module" src="/static/js/highcharts/chart_parameters/optimizer_params.js"></script>
+<script type="module">
+    import { optimizerChart } from '/static/js/highcharts/optimizer_chart.js'
+    var efficientFrontierData = {{ efficient_frontier_data|safe }}
+    var scatterData = {{ scatter_data|safe }}
+    optimizerChart("optimizer_chart", "Efficient Frontier", efficientFrontierData, scatterData)
 </script>
 
 {% endblock %}

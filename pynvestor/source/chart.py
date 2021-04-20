@@ -16,7 +16,7 @@ class Chart:
 
     @property
     @abc.abstractmethod
-    def highcharts_parameters(self):
+    def chart_data(self):
         pass
 
 
@@ -63,85 +63,11 @@ class StockChart(Chart):
         ohlc = [[d, o, h, l, c] for d, o, h, l, c in zip(dates, stock_open, stock_high, stock_low, stock_close)]
         volume = [{'x': d, 'y': v, 'color': c} for (d, v, c) in zip(dates, stock_volume, volume_colors)]
 
-        highcharts_params = {
-            'series': [
-                {
-                    'type': 'candlestick',
-                    'name': self.name,
-                    'data': ohlc
-                },
-                {
-                    'type': 'column',
-                    'name': 'Volume',
-                    'data': volume,
-                    'yAxis': 1
-                }
-            ],
-            'scrollbar': {'enabled': False},
-            'plotOptions': {
-                'series': {
-                    'turboThreshold': 0,
-                },
-
-                'candlestick': {
-                    'color': f'{self.decreasing_color}',
-                    'upColor': f'{self.increasing_color}',
-                    'tooltip': {
-                        'valueDecimals': 2
-                    }
-                },
-            },
-            'rangeSelector': {
-                'selected': 4
-            },
-
-            'title': {
-                'text': f'{self.title}'
-            },
-
-            'yAxis': [{
-                'labels': {
-                    'align': 'left'
-                },
-                'height': '80%',
-                'resize': {
-                    'enabled': True
-                }
-            }, {
-                'labels': {
-                    'align': 'left'
-                },
-                'top': '80%',
-                'height': '20%',
-                'offset': 0
-            }],
-            'tooltip': {
-                'shape': 'square',
-                'headerShape': 'callout',
-                'borderWidth': 0,
-                'shadow': False
-            },
-            'responsive': {
-                'rules': [{
-                    'condition': {
-                        'maxWidth': 800
-                    },
-                    'chartOptions': {
-                        'rangeSelector': {
-                            'inputEnabled': False
-                        }
-                    }
-                }]
-            }
-        }
-
-        self._highcharts_parameters = highcharts_params
-
-        return True
+        return ohlc, volume
 
     @property
-    def highcharts_parameters(self):
-        return self._highcharts_parameters
+    def chart_data(self):
+        return self._get_data()
 
 
 class PortfolioChart(Chart):
@@ -151,7 +77,6 @@ class PortfolioChart(Chart):
         self._mic = mic
         self._portfolio_navs = portfolio_navs
         self.title = "Portfolio Performance"
-        self._get_data()
 
     def _get_data(self):
         reference_index_details = euronext.get_instrument_details(self._isin_reference_index, self._mic)
@@ -174,31 +99,21 @@ class PortfolioChart(Chart):
                            zip(dates, tuple(chart_data['reference_index_base100'].values))]
         portfolio_navs = [[d, nav] for d, nav in zip(dates, tuple(chart_data['navs'].values))]
 
-        highcharts_data = [{'data': reference_index,
-                            'name': self._index_name,
-                            'tooltip': {'valueDecimals': 2},
-                            'color': '#ff2626',
-                            'opacity': 0.3},
-                           {'data': portfolio_navs,
-                            'name': 'Portfolio',
-                            'tooltip': {'valueDecimals': 2},
-                            'color': '#ffdf00'}]
+        chart_data = [{'data': reference_index,
+                       'name': self._index_name,
+                       'tooltip': {'valueDecimals': 2},
+                       'color': '#ff2626',
+                       'opacity': 0.3},
+                      {'data': portfolio_navs,
+                       'name': 'Portfolio',
+                       'tooltip': {'valueDecimals': 2},
+                       'color': '#ffdf00'}]
 
-        highcharts_params = {'rangeSelector': {'selected': 5},
-                             'navigator': {'enabled': False},
-                             'scrollbar': {'enabled': False},
-                             'title': {'text': self.title},
-                             'series': highcharts_data,
-                             'yAxis': {'offset': 30},
-                             }
-
-        self._highcharts_parameters = highcharts_params
-
-        return True
+        return chart_data
 
     @property
-    def highcharts_parameters(self):
-        return self._highcharts_parameters
+    def chart_data(self):
+        return self._get_data()
 
 
 class ValueAtRiskChart(Chart):
@@ -224,58 +139,15 @@ class ValueAtRiskChart(Chart):
             if lb < self._value_at_risk < ub:
                 var_position = idx + (self._value_at_risk - lb) / bin_size - 0.5
 
-        highcharts_params = {
-            'chart': {'zoomType': 'x'},
-            'title': {'text': 'Value At Risk 95%'},
-            'plotOptions': {
-                'column': {
-                    'pointPadding': 0,
-                    'borderWidth': 0,
-                    'groupPadding': 0,
-                    'shadow': False,
-                    'colorByPoint': False
-                }
-            },
-            'xAxis': {
-                'categories': bins_names,
-                'plotBands': {
-                    'from': var_position,
-                    'to': len(bins) - 1,
-                    'color': '#ff9999',
-                    'label': {'text': f'VaR 95%: {round(self._value_at_risk, 2)} EUR',
-                              'align': 'left',
-                              'x': 30,
-                              'y': 50,
-                              'style': {
-                                  'fontSize': 12,
-                                  'fontWeight': 'bold'
-                              }
-                              }
-                }
-            },
-            'yAxis': [{
-                'labels': {
-                    'align': 'left'
-                },
-                'resize': {
-                    'enabled': True
-                }
-            }],
-            'series': [
-                {
-                    'type': 'column',
-                    'data': counts,
-                    'color': '#99c2ff'
-                }
-            ]
-        }
-        self._highcharts_parameters = highcharts_params
+        self.categories = bins_names
+        self.var_position = var_position
+        self.end_position = len(bins) - 1
 
-        return True
+        return counts
 
     @property
-    def highcharts_parameters(self):
-        return self._highcharts_parameters
+    def chart_data(self):
+        return self._get_data()
 
 
 class OptimizerChart:
@@ -287,44 +159,16 @@ class OptimizerChart:
         self._efficient_weights = efficient_weights
         self._scatter_points = scatter_points
 
-        self._get_data()
-
     def _get_data(self):
         line_data = [[vol, r] for vol, r in zip(self._vol_data, self._expected_return_data)]
         scatter_data = [{'name': d.get('name'),
                          'x': d.get('vol'),
-                         'y': d.get('expected_return')} for d in self._scatter_points]
+                         'y': d.get('expected_return'),
+                         'color': d.get('color'),
+                         'marker': d.get('marker')} for d in self._scatter_points]
 
-        highcharts_params = {
-            'chart': {
-                'type': 'spline',
-                'zoomType': 'x'
-            },
-            'title': {
-                'text': self._title
-            },
-            'series': [
-                {
-                    'type': 'line',
-                    'name': 'Efficient Frontier',
-                    'data': line_data
-                },
-                {
-                    'type': 'scatter',
-                    'tooltip': {
-                        'headerFormat': '<strong>{point.key}</strong><br>'
-                    },
-                    'data': scatter_data
-                }
-            ]
-        }
-
-        self._highcharts_parameters = highcharts_params
+        return line_data, scatter_data
 
     @property
-    def highcharts_parameters(self):
-        return self._highcharts_parameters
-
-
-def highcharts_parameters(self):
-    return self._highcharts_parameters
+    def chart_data(self):
+        return self._get_data()

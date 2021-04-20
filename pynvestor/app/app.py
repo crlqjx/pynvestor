@@ -12,6 +12,7 @@ import json
 
 # TODO: find a way to format automatically performances
 # TODO: put frames to regroup elements (market news, indices levels, ...)
+# TODO: refactor this module; logic should be put elsewhere, put more abstraction
 
 
 class JsonEncoder(json.JSONEncoder):
@@ -66,7 +67,8 @@ def portfolio():
                            df=df_ptf,
                            ptf=ptf,
                            ptf_date=ptf_date,
-                           ptf_chart_params=json.dumps(ptf_chart.highcharts_parameters))
+                           chart_title=ptf_chart.title,
+                           ptf_chart_data=json.dumps(ptf_chart.chart_data))
 
 
 @app.route('/risk')
@@ -77,10 +79,13 @@ def risk_management():
     return render_template('risk_management.html',
                            names=list(risk_manager.stocks_names.values()),
                            correlation_matrix=risk_manager.correlation_matrix,
-                           ptf_vol=risk_manager.annualized_portfolio_volatility,
-                           ptf_sharpe_ratio=risk_manager.portfolio_sharpe_ratio,
-                           ptf_value_at_risk=risk_manager.portfolio_value_at_risk,
-                           var_chart_params=json.dumps(var_chart.highcharts_parameters, cls=JsonEncoder))
+                           ptf_vol=round(risk_manager.annualized_portfolio_volatility, 4),
+                           ptf_sharpe_ratio=round(risk_manager.portfolio_sharpe_ratio, 2),
+                           ptf_value_at_risk=round(risk_manager.portfolio_value_at_risk, 2),
+                           categories=json.dumps(var_chart.categories, cls=JsonEncoder),
+                           var_position=var_chart.var_position,
+                           end_position=var_chart.end_position,
+                           var_chart_data=json.dumps(var_chart.chart_data, cls=JsonEncoder))
 
 
 @app.route('/optimizer')
@@ -99,11 +104,9 @@ def optimizer():
     annualized_volatility_opti = np.sqrt(var_opti)
 
     # Efficient portfolio with a return corresponding to the highest single stock return
-    max_return_stock_index = list(expected_returns).index(max(expected_returns))
     max_return_stock = max(expected_returns) * risky_assets_weight
     max_stock_efficient_weights, max_stock_efficient_var, max_stock_efficient_return = \
         optimizer.minimum_variance_optimization(target_return=max_return_stock)
-    efficient_vol = np.sqrt(max_stock_efficient_var)
 
     # Optimizing for 100 return points between the global min var portfolio and the max return stock efficient portfolio
     returns_array = np.linspace(gmv_expected_return, max_stock_efficient_return, 100)
@@ -113,16 +116,22 @@ def optimizer():
     gmv_portfolio = {'weights': gmv_weigths,
                      'vol': gmv_annualized_volatility,
                      'expected_return': gmv_expected_return,
-                     'name': 'Global Minimum Variance'}
+                     'name': 'Global Minimum Variance',
+                     'color': 'green',
+                     'marker': {'radius': 5}}
     current_portfolio = {'weights': list(optimizer.stocks_weights.values()),
                          'vol': optimizer.annualized_portfolio_volatility,
                          'expected_return': np.dot(np.array(list(optimizer.stocks_weights.values())),
                                                    optimizer.mean_returns),
-                         'name': 'Current Portfolio'}
+                         'name': 'Current Portfolio',
+                         'color': 'red',
+                         'marker': {'radius': 5}}
     portfolio_optimized = {'weights': weights_opti,
                            'vol': annualized_volatility_opti,
                            'expected_return': ptf_return_opti,
-                           'name': 'Portfolio Optimized'}
+                           'name': 'Portfolio Optimized',
+                           'color': 'green',
+                           'marker': {'radius': 5}}
     scatter_points = [gmv_portfolio, current_portfolio, portfolio_optimized]
     optimizer_chart = OptimizerChart(efficient_weights=efficient_weights,
                                      vol_data=list(np.sqrt(efficient_var)),
@@ -130,8 +139,11 @@ def optimizer():
                                      scatter_points=scatter_points,
                                      title='Efficient Frontier')
 
+    efficient_frontier_data, scatter_data = optimizer_chart.chart_data
+
     return render_template('optimizer.html',
-                           optimizer_chart_params=json.dumps(optimizer_chart.highcharts_parameters, cls=JsonEncoder))
+                           efficient_frontier_data=json.dumps(efficient_frontier_data, cls=JsonEncoder),
+                           scatter_data=json.dumps(scatter_data, cls=JsonEncoder))
 
 
 @app.route('/screener')
@@ -163,8 +175,14 @@ def run_screener():
 @app.route('/chart')
 def show_chart():
     isin = request.args.get('isin')
-    chart = StockChart(isin)
-    return render_template('stock.html', stock_chart_params=json.dumps(chart.highcharts_parameters, cls=JsonEncoder))
+    stock_chart = StockChart(isin)
+    ohlc_data, volume_data = stock_chart.chart_data
+    return render_template('stock.html',
+                           stock_name=stock_chart.name,
+                           chart_title=stock_chart.title,
+                           ohlc_data=json.dumps(ohlc_data, cls=JsonEncoder),
+                           volume_data=json.dumps(volume_data, cls=JsonEncoder)
+                           )
 
 
 app.run(debug=False)
