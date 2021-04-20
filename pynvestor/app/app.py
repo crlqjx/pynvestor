@@ -68,7 +68,7 @@ def portfolio():
                            ptf=ptf,
                            ptf_date=ptf_date,
                            chart_title=ptf_chart.title,
-                           ptf_chart_data=json.dumps(ptf_chart.chart_data))
+                           ptf_chart_data=json.dumps(ptf_chart.chart_data, cls=JsonEncoder))
 
 
 @app.route('/risk')
