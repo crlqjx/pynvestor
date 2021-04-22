@@ -1,6 +1,7 @@
 $(document).ready(function() {
     $('form').on('submit', function(event) {
-        document.getElementById("screenerResult").innerHTML = '';
+        document.getElementById("screenerResult").innerHTML = 'Loading...';  // TODO: add loading animation
+        document.getElementById("resultBlock").style.display = 'block'; // make the result div block visible
         var period_buttons = document.getElementsByName("periodBtn");
         for (var i = 0; i < period_buttons.length; i++) {
             if (period_buttons[i].checked == true) {
@@ -30,7 +31,7 @@ $(document).ready(function() {
         })
         .done(function(data) {
             var result = JSON.parse(data);
-//            $('#screenerResult').text(JSON.stringify(result));
+            document.getElementById("screenerResult").innerHTML = '';
             grid("screenerResult", result)
         });
 

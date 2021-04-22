@@ -2,153 +2,187 @@
 
 {% block body %}
 
-<div class="card">
-    <div class="card-body">
-        <form id="screenerForm">
-            <fieldset class="form-group">
-                <div class="row">
-                    <legend class="col-form-label col-sm-1 pt-0">Period</legend>
-                    <div class="btn-group btn-group-toggle" id="periodBtnGroup" data-toggle="buttons">
-                        <label class="btn btn-secondary btn-sm active">
-                            <input type="radio" id="interimPeriod" name="periodBtn" autocomplete="off" value="interim"
-                                   checked>
-                            Interim
-                        </label>
-                        <label class="btn btn-secondary btn-sm">
-                            <input type="radio" id="annualPeriod" name="periodBtn" autocomplete="off" value="annual">Annual
-                        </label>
-                    </div>
-                </div>
-                <div class="form-group row">
-                    <div class="col-sm-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="perCheckbox" name="fieldName"
-                                   value="per" checked>
-                            <label class="form-check-label" for="perCheckbox">
-                                Price Earnings Ratio
-                            </label>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <form id="screenerForm">
+                        <fieldset class="form-group">
                             <div class="row">
-                                between
-                                <div class="col">
-                                    <input type="text" class="form-control" placeholder="Min" name="minValue" value="0"
-                                           id="perMin">
-                                </div>
-                                <div class="col">
-                                    <input type="text" class="form-control" placeholder="Max" name="maxValue" value="15"
-                                           id="perMax">
+                                <div class="col-form-label col-sm-1 pt-0">Period</div>
+                                <div class="btn-group btn-group-toggle" id="periodBtnGroup" data-toggle="buttons">
+                                    <label class="btn btn-secondary btn-sm active">
+                                        <input type="radio" id="interimPeriod" name="periodBtn" autocomplete="off"
+                                               value="interim"
+                                               checked>
+                                        Interim
+                                    </label>
+                                    <label class="btn btn-secondary btn-sm">
+                                        <input type="radio" id="annualPeriod" name="periodBtn" autocomplete="off"
+                                               value="annual">Annual
+                                    </label>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group row">
-                    <div class="col-sm-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="epsCheckbox" name="fieldName"
-                                   value="eps" checked>
-                            <label class="form-check-label" for="epsCheckbox">
-                                Earnings Per Share
-                            </label>
-                            <div class="row">
-                                between
-                                <div class="col">
-                                    <input type="text" class="form-control" placeholder="Min" name="minValue" value="0">
-                                </div>
-                                <div class="col">
-                                    <input type="text" class="form-control" placeholder="Max" name="maxValue"
-                                           value="100">
+                            <div class="form-group row">
+                                <div class="col-sm-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="perCheckbox"
+                                               name="fieldName"
+                                               value="per" checked>
+                                        <label class="form-check-label" for="perCheckbox">
+                                            Price Earnings Ratio
+                                        </label>
+                                        <div class="row">
+                                            between
+                                            <div class="col">
+                                                <input type="text" class="form-control" placeholder="Min"
+                                                       name="minValue"
+                                                       value="0"
+                                                       id="perMin">
+                                            </div>
+                                            <div class="col">
+                                                <input type="text" class="form-control" placeholder="Max"
+                                                       name="maxValue"
+                                                       value="15"
+                                                       id="perMax">
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
+                            <div class="form-group row">
+                                <div class="col-sm-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="epsCheckbox"
+                                               name="fieldName"
+                                               value="eps" checked>
+                                        <label class="form-check-label" for="epsCheckbox">
+                                            Earnings Per Share
+                                        </label>
+                                        <div class="row">
+                                            between
+                                            <div class="col">
+                                                <input type="text" class="form-control" placeholder="Min"
+                                                       name="minValue"
+                                                       value="0">
+                                            </div>
+                                            <div class="col">
+                                                <input type="text" class="form-control" placeholder="Max"
+                                                       name="maxValue"
+                                                       value="100">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                <div class="form-group row">
-                    <div class="col-sm-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="roeCheckbox" name="fieldName"
-                                   value="roe" checked>
-                            <label class="form-check-label" for="roeCheckbox">
-                                Return On Equity
-                            </label>
-                            <div class="row">
-                                between
-                                <div class="col">
-                                    <input type="text" class="form-control" placeholder="Min" name="minValue"
-                                           value="0.10">
-                                </div>
-                                <div class="col">
-                                    <input type="text" class="form-control" placeholder="Max" name="maxValue" value="2">
+                            <div class="form-group row">
+                                <div class="col-sm-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="roeCheckbox"
+                                               name="fieldName"
+                                               value="roe" checked>
+                                        <label class="form-check-label" for="roeCheckbox">
+                                            Return On Equity
+                                        </label>
+                                        <div class="row">
+                                            between
+                                            <div class="col">
+                                                <input type="text" class="form-control" placeholder="Min"
+                                                       name="minValue"
+                                                       value="0.10">
+                                            </div>
+                                            <div class="col">
+                                                <input type="text" class="form-control" placeholder="Max"
+                                                       name="maxValue"
+                                                       value="2">
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="form-group row">
-                    <div class="col-sm-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="operatingMarginCheckbox"
-                                   name="fieldName"
-                                   value="operating_margin" checked>
-                            <label class="form-check-label" for="OperatingMarginCheckbox">
-                                Operating Margin
-                            </label>
-                            <div class="row">
-                                between
-                                <div class="col">
-                                    <input type="text" class="form-control" placeholder="Min" name="minValue"
-                                           value="0.05">
-                                </div>
-                                <div class="col">
-                                    <input type="text" class="form-control" placeholder="Max" name="maxValue"
-                                           value="10">
+                            <div class="form-group row">
+                                <div class="col-sm-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="operatingMarginCheckbox"
+                                               name="fieldName"
+                                               value="operating_margin" checked>
+                                        <label class="form-check-label" for="OperatingMarginCheckbox">
+                                            Operating Margin
+                                        </label>
+                                        <div class="row">
+                                            between
+                                            <div class="col">
+                                                <input type="text" class="form-control" placeholder="Min"
+                                                       name="minValue"
+                                                       value="0.05">
+                                            </div>
+                                            <div class="col">
+                                                <input type="text" class="form-control" placeholder="Max"
+                                                       name="maxValue"
+                                                       value="10">
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="form-group row">
-                    <div class="col-sm-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="gearingCheckbox" value="gearing"
-                                   name="fieldName"
-                                   checked>
-                            <label class="form-check-label" for="gearingCheckbox">
-                                Gearing
-                            </label>
-                            <div class="row">
-                                between
-                                <div class="col">
-                                    <input type="text" class="form-control" placeholder="Min" name="minValue" value="0">
-                                </div>
-                                <div class="col">
-                                    <input type="text" class="form-control" placeholder="Max" name="maxValue" value="1">
+                            <div class="form-group row">
+                                <div class="col-sm-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="gearingCheckbox"
+                                               value="gearing"
+                                               name="fieldName"
+                                               checked>
+                                        <label class="form-check-label" for="gearingCheckbox">
+                                            Gearing
+                                        </label>
+                                        <div class="row">
+                                            between
+                                            <div class="col">
+                                                <input type="text" class="form-control" placeholder="Min"
+                                                       name="minValue"
+                                                       value="0">
+                                            </div>
+                                            <div class="col">
+                                                <input type="text" class="form-control" placeholder="Max"
+                                                       name="maxValue"
+                                                       value="1">
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        </fieldset>
+                        <button type="submit" class="btn btn-primary">Run</button>
+                    </form>
                 </div>
-            </fieldset>
-            <button type="submit" class="btn btn-primary">Run</button>
-        </form>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row">
+        <div class="col">
+            <div class="card" id="resultBlock">
+                <div class="card-body">
+                    <div id="screenerResult"></div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<body>
-    <div class="card">
-        <div class="card-body">
-            <div id="screenerResult"></div>
-        </div>
-    </div>
-</body>
 
-<link rel="stylesheet" href="https://unpkg.com/ag-grid-community/dist/styles/ag-grid.css">
-<link rel="stylesheet" href="https://unpkg.com/ag-grid-community/dist/styles/ag-theme-alpine.css">
-
-<script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
 <script type="text/javascript" src="/static/js/aggrid.js"></script>
 <script type="text/javascript" src="/static/js/screener_ajax.js"></script>
+<script>
+    <!--    hide result div block-->
+    document.getElementById("resultBlock").style.display = "none"
+
+
+</script>
 
 {% endblock %}

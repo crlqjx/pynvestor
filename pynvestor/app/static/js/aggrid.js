@@ -5,7 +5,6 @@ function isinCellRenderer(params) {
 }
 
 function grid(toElementId, gridOptions) {
-    console.log('run aggrid')
     // lookup the container we want the Grid to use
     var eGridDiv = document.querySelector('#' + toElementId);
     gridOptions["components"] = {"isinCellRenderer": isinCellRenderer}
