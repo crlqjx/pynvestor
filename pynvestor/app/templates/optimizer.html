@@ -4,14 +4,26 @@
 
 <div class="container-fluid">
     <div class="row">
-        <div class="card">
-            <div class="card-body">
-                <div id="optimizer_chart"></div>
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-body">
+                    <div id="optimizer_chart"></div>
+                </div>
             </div>
         </div>
+
+        <div class="col-sm-5" id="onClickDisplay">
+            <div class="card">
+                <div class="card-body">
+                    <div id="onClickWeightsData"></div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
+<script type="text/javascript" src="/static/js/aggrid.js"></script>
 <script type="text/javascript" src="https://code.highcharts.com/stock/highstock.js"></script>
 <script type="text/javascript" src="https://code.highcharts.com/stock/modules/data.js"></script>
 <script type="text/javascript" src="https://code.highcharts.com/stock/modules/exporting.js"></script>
@@ -19,9 +31,13 @@
 <script type="module" src="/static/js/highcharts/chart_parameters/optimizer_params.js"></script>
 <script type="module">
     import { optimizerChart } from '/static/js/highcharts/optimizer_chart.js'
+
+    document.getElementById("onClickDisplay").style.display = "none"
+
     var efficientFrontierData = {{ efficient_frontier_data|safe }}
     var scatterData = {{ scatter_data|safe }}
     optimizerChart("optimizer_chart", "Efficient Frontier", efficientFrontierData, scatterData)
+
 </script>
 
 {% endblock %}

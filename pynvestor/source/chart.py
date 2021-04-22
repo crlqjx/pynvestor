@@ -164,6 +164,7 @@ class OptimizerChart:
         scatter_data = [{'name': d.get('name'),
                          'x': d.get('vol'),
                          'y': d.get('expected_return'),
+                         'weights': d.get('weights'),
                          'color': d.get('color'),
                          'marker': d.get('marker')} for d in self._scatter_points]
 

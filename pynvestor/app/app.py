@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request
 from pynvestor.source.portfolio import Portfolio
 from pynvestor.source.risk import PortfolioRiskManager
 from pynvestor.source.screener import Screener
@@ -144,6 +144,29 @@ def optimizer():
     return render_template('optimizer.html',
                            efficient_frontier_data=json.dumps(efficient_frontier_data, cls=JsonEncoder),
                            scatter_data=json.dumps(scatter_data, cls=JsonEncoder))
+
+
+@app.route('/optimizer_portfolio_weights', methods=['POST'])
+def show_portfolio_weights():
+    weights = request.json.get('weights')
+    ptf = Portfolio()
+    current_portfolio_weights = ptf.stocks_weights
+    selected_portfolio_weights = dict(zip(ptf.stocks_weights.keys(), weights))
+    column_definition = [{'field': 'isin'},
+                         {'field': 'name'},
+                         {'field': 'weights current portfolio'},
+                         {'field': 'weights selected portfolio'}]
+    row_data = [{'isin': isin,
+                 'name': ptf.stocks_names[isin],
+                 'weights current portfolio': current_portfolio_weights[isin],
+                 'weights selected portfolio': selected_portfolio_weights[isin]} for isin in current_portfolio_weights]
+    options = {'defaultColDef': {'resizable': True,
+                                 'sortable': True},
+               'domLayout': 'autoHeight'}
+    aggrid_table = {'columnDefs': column_definition,
+                    'rowData': row_data}
+    aggrid_table.update(options)
+    return json.dumps(aggrid_table, cls=JsonEncoder)
 
 
 @app.route('/screener')
