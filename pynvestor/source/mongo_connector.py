@@ -1,3 +1,5 @@
+from os import environ
+
 from pynvestor import logger
 
 from pymongo import MongoClient
@@ -7,10 +9,12 @@ from typing import Generator
 
 
 class MongoConnector:
-    def __init__(self):
-        host = 'localhost'
-        port = 27017
-        self._mongo_client = MongoClient(host, port)
+    def __init__(self, env):
+        if env == 'prod':
+            host = environ.get('MONGO_HOST_PROD')
+        else:
+            host = environ.get('MONGO_HOST_DEV')
+        self._mongo_client = MongoClient(host)
         self._sanity_check()
 
     @property

@@ -15,8 +15,7 @@ from pynvestor import logger
 from typing import List, Tuple
 
 current_directory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-with open(os.path.join(current_directory, 'config.json'), 'r') as config_file:
-    config = json.load(config_file)
+euronext_api_key = os.environ.get('euronextapikey')
 
 
 class MarketDataProvider:
@@ -118,7 +117,7 @@ class EuronextClient(MarketDataProvider):
         exch_code = self.get_exch_code_from_mic(mic)
         url = f"https://gateway.euronext.com/api/instrumentDetail?code={isin}&codification=ISIN&exchCode={exch_code}&" \
               f"sessionQuality=RT&view=FULL" \
-              f"&authKey={config['euronextapikey']}"
+              f"&authKey={euronext_api_key}"
         resp = self._session.get(url, data={'theme_name': 'euronext_live'})
         resp.raise_for_status()
         return resp.json()
@@ -128,7 +127,7 @@ class EuronextClient(MarketDataProvider):
         async def fetch(isin, mic):
             exch_code = self.get_exch_code_from_mic(mic)
             url = f"https://gateway.euronext.com/api/instrumentDetail?code={isin}&codification=" \
-                  f"ISIN&exchCode={exch_code}&sessionQuality=RT&view=FULL&authKey={config['euronextapikey']}"
+                  f"ISIN&exchCode={exch_code}&sessionQuality=RT&view=FULL&authKey={euronext_api_key}"
             try:
                 async with aiohttp.ClientSession() as session:
                     async with session.get(url, data={'theme_name': 'euronext_live'}) as response:
