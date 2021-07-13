@@ -108,6 +108,7 @@ class StockDividend(Transaction):
         self.mic = mic.strip()
         self.net_cashflow = net_amount
         self.notes = notes
+        self.name = self._get_name()
 
 
 class StockSplit(Transaction):
@@ -118,6 +119,7 @@ class StockSplit(Transaction):
         self.mic = mic.strip()
         self.quantity = new_quantity
         self.notes = notes
+        self.name = self._get_name()
 
 
 class TransactionSchema(Schema):
