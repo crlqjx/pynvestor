@@ -25,6 +25,8 @@ class MarketDataProvider:
         adapter = HTTPAdapter(max_retries=retry)
         self._session.mount("https://", adapter)
         self._session.mount("http://", adapter)
+        self._headers = {'User-Agent': 'Chrome/91.0.4472.124'}
+        self._session.headers = self._headers
 
     def __repr__(self):
         return self.__class__.__name__
